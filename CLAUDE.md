@@ -29,7 +29,7 @@
 ## Sprint 1: Foundation (Jan 15 - Jan 29)
 
 ### Story 1.1: Project Infrastructure Setup
-- [ ] Task 1.1.1: Initialize Next.js Project with Tailwind
+- [x] Task 1.1.1: Initialize Next.js Project with Tailwind (2025-01-15)
 - [ ] Task 1.1.2: Set Up shadcn/ui Component Library
 - [ ] Task 1.1.3: Configure Firebase Project
 - [ ] Task 1.1.4: Deploy to Vercel
@@ -103,6 +103,7 @@
 
 > Keep last 10 entries. Newest at top. Format: `YYYY-MM-DD @agent — what was done, decisions made, blockers`
 
+- 2025-01-15 @claude — Task 1.1.1 completed: Created required folder structure (components/ui, components/layout, components/common, hooks, lib, types, pages/auth, pages/donor, pages/admin). Configured Tailwind CSS v4 with custom primary color #23AAE1 via @theme directive. Updated README.md with project structure details.
 - 2025-01-15 @human — Project initialized with create-next-app (Pages Router, TypeScript, Tailwind). CLAUDE.md and docs created. Ready for Sprint 1.
 
 ---

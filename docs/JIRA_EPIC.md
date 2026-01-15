@@ -77,7 +77,7 @@ Create Next.js project with Pages Router, Tailwind CSS, and proper folder struct
   └── types/            # TypeScript types
   ```
 - Configure `tailwind.config.js` with custom colors:
-  - Primary green: #2D5A27
+  - Primary blue: #23AAE1
   - Secondary colors TBD
 - Create `.env.local.example` with required environment variables
 - Update `README.md` with setup instructions

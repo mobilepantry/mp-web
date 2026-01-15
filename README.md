@@ -56,15 +56,19 @@ ADMIN_EMAILS=admin1@example.com,admin2@example.com
 
 ```
 src/
-├── components/     # React components
-├── pages/          # Next.js pages
-│   ├── api/        # API routes
-│   ├── auth/       # Login, signup, forgot-password
-│   ├── donor/      # Donor portal
-│   └── admin/      # Admin dashboard
-├── lib/            # Utilities, Firebase config, database helpers
-├── hooks/          # Custom React hooks
-└── types/          # TypeScript types
+├── components/
+│   ├── ui/           # shadcn components
+│   ├── layout/       # Header, Footer, Layout
+│   └── common/       # Shared components
+├── pages/
+│   ├── api/          # API routes
+│   ├── auth/         # Login, signup, forgot-password
+│   ├── donor/        # Donor portal pages
+│   └── admin/        # Admin dashboard pages
+├── lib/              # Utilities, Firebase config
+├── hooks/            # Custom React hooks
+├── styles/           # Global styles
+└── types/            # TypeScript types
 ```
 
 ## Features
