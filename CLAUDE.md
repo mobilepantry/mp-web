@@ -32,7 +32,7 @@
 - [x] Task 1.1.1: Initialize Next.js Project with Tailwind (2025-01-15)
 - [x] Task 1.1.2: Set Up shadcn/ui Component Library (2025-01-15)
 - [x] Task 1.1.3: Configure Firebase Project (2025-01-15)
-- [ ] Task 1.1.4: Deploy to Vercel
+- [x] Task 1.1.4: Deploy to Vercel (2025-01-15)
 
 ### Story 1.2: Authentication System
 - [ ] Task 1.2.1: Create Auth Context and Hooks
@@ -103,7 +103,8 @@
 
 > Keep last 10 entries. Newest at top. Format: `YYYY-MM-DD @agent — what was done, decisions made, blockers`
 
-- 2025-01-15 @claude — Task 1.1.3 completed: Installed Firebase SDK. Created lib/firebase.ts with auth and Firestore initialization. Configured environment variables in .env.local and .env.local.example. Reused existing Firebase project (MobilePantry-MVP) with Email/Password and Google OAuth enabled. Verified connection (permission denied expected until security rules configured in Task 1.3.3).
+- 2025-01-15 @claude — Task 1.1.4 completed: Made GitHub repository public. Deployed to Vercel (Hobby plan) at https://mp-web-livid.vercel.app/. Configured all Firebase environment variables in Vercel dashboard. Verified automatic preview deployments working. Added deployment badge to README. Decision: Using james@mobilepantry.org Vercel account with Hobby plan for MVP.
+- 2025-01-15 @claude — Task 1.1.3 completed: Installed Firebase SDK. Created lib/firebase.ts with auth and Firestore initialization. Configured environment variables in .env.local and .env.local.example. Reused existing Firebase project (MobilePantry-MVP) with Email/Password and Google OAuth enabled. Verified connection after updating Firestore rules to test mode.
 - 2025-01-15 @claude — Task 1.1.2 completed: Initialized shadcn/ui with default style and Slate base color. Installed 13 components (button, input, label, card, form, select, textarea, table, badge, alert, dialog, dropdown-menu, sonner). Created components/ui/index.ts for clean exports. Added secondary colors (#159977, #FFDF05, #F29516, #CC3332). Build verified successful.
 - 2025-01-15 @claude — Task 1.1.1 completed: Created required folder structure (components/ui, components/layout, components/common, hooks, lib, types, pages/auth, pages/donor, pages/admin). Configured Tailwind CSS v4 with custom primary color #23AAE1 via @theme directive. Updated README.md with project structure details.
 - 2025-01-15 @human — Project initialized with create-next-app (Pages Router, TypeScript, Tailwind). CLAUDE.md and docs created. Ready for Sprint 1.

@@ -1,5 +1,7 @@
 # MobilePantry
 
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat&logo=vercel)](https://mp-web-livid.vercel.app/)
+
 A web application for coordinating food rescue pickups in Columbus, Ohio.
 
 MobilePantry connects businesses with surplus food to community organizations in need. Donors request pickups through our platform, and our team handles the rescue and delivery.
