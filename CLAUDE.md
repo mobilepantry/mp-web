@@ -35,15 +35,15 @@
 - [x] Task 1.1.4: Deploy to Vercel (2025-01-15)
 
 ### Story 1.2: Authentication System
-- [ ] Task 1.2.1: Create Auth Context and Hooks
-- [ ] Task 1.2.2: Build Login Page
-- [ ] Task 1.2.3: Build Signup Page
-- [ ] Task 1.2.4: Build Forgot Password Page
+- [x] Task 1.2.1: Create Auth Context and Hooks (2026-01-20)
+- [x] Task 1.2.2: Build Login Page (2026-01-20)
+- [x] Task 1.2.3: Build Signup Page (2026-01-20)
+- [x] Task 1.2.4: Build Forgot Password Page (2026-01-20)
 
 ### Story 1.3: Database Schema Implementation
-- [ ] Task 1.3.1: Define TypeScript Types and Firestore Schema
-- [ ] Task 1.3.2: Create Database Helper Functions
-- [ ] Task 1.3.3: Configure Firestore Security Rules
+- [x] Task 1.3.1: Define TypeScript Types and Firestore Schema (2026-01-20)
+- [x] Task 1.3.2: Create Database Helper Functions (2026-01-20)
+- [x] Task 1.3.3: Configure Firestore Security Rules (2026-01-20)
 
 ---
 
@@ -103,6 +103,7 @@
 
 > Keep last 10 entries. Newest at top. Format: `YYYY-MM-DD @agent — what was done, decisions made, blockers`
 
+- 2026-01-20 @claude — Stories 1.2 & 1.3 completed: Created AuthContext with Firebase Auth (email/password + Google OAuth), useAuth/useRequireAuth/useRequireAdmin hooks. Built login, signup, forgot-password, and complete-profile pages with React Hook Form + Zod validation. Created TypeScript types (Donor, PickupRequest, Address) and Firestore helper functions (donors.ts, pickups.ts, stats.ts). Added Firestore security rules with admin email allowlist. Also added NEXT_PUBLIC_ADMIN_EMAILS env var for client-side admin check.
 - 2025-01-15 @claude — Task 1.1.4 completed: Made GitHub repository public. Deployed to Vercel (Hobby plan) at https://mp-web-livid.vercel.app/. Configured all Firebase environment variables in Vercel dashboard. Verified automatic preview deployments working. Added deployment badge to README. Decision: Using james@mobilepantry.org Vercel account with Hobby plan for MVP.
 - 2025-01-15 @claude — Task 1.1.3 completed: Installed Firebase SDK. Created lib/firebase.ts with auth and Firestore initialization. Configured environment variables in .env.local and .env.local.example. Reused existing Firebase project (MobilePantry-MVP) with Email/Password and Google OAuth enabled. Verified connection after updating Firestore rules to test mode.
 - 2025-01-15 @claude — Task 1.1.2 completed: Initialized shadcn/ui with default style and Slate base color. Installed 13 components (button, input, label, card, form, select, textarea, table, badge, alert, dialog, dropdown-menu, sonner). Created components/ui/index.ts for clean exports. Added secondary colors (#159977, #FFDF05, #F29516, #CC3332). Build verified successful.
