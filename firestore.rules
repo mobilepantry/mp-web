@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(donorId) {
+      return isAuthenticated() && request.auth.uid == donorId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.email in [
+          'witten@mobilepantry.org',
+          'james@mobilepantry.org',
+          'sky@mobilepantry.org'
+        ];
+    }
+
+    // Donors collection
+    match /donors/{donorId} {
+      allow read: if isOwner(donorId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == donorId;
+      allow update: if isOwner(donorId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Pickup requests collection
+    match /pickupRequests/{requestId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.donorId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() ||
+        (resource.data.donorId == request.auth.uid &&
+         resource.data.status == 'pending');
+      allow delete: if isAdmin();
+    }
+  }
+}

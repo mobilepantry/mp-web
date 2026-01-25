@@ -1,33 +1,29 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAuth } from './useAuth';
-import { User } from 'firebase/auth';
+import { useAuth } from '@/lib/auth-context';
 
-/**
- * Hook that requires user to be authenticated
- * Redirects to login page if not authenticated
- *
- * @returns User object if authenticated, null during loading
- *
- * @example
- * function DonorDashboard() {
- *   const user = useRequireAuth();
- *
- *   if (!user) return <div>Loading...</div>;
- *
- *   return <div>Welcome {user.email}</div>;
- * }
- */
-export function useRequireAuth(): User | null {
-  const { user, loading } = useAuth();
+interface UseRequireAuthOptions {
+  redirectTo?: string;
+  requireDonorProfile?: boolean;
+}
+
+export function useRequireAuth(options: UseRequireAuthOptions = {}) {
+  const { redirectTo = '/auth/login', requireDonorProfile = true } = options;
+  const { user, donor, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      // Redirect to login, preserving the intended destination
-      router.push(`/auth/login?redirect=${encodeURIComponent(router.asPath)}`);
-    }
-  }, [user, loading, router]);
+    if (loading) return;
 
-  return user;
+    if (!user) {
+      router.push(`${redirectTo}?redirect=${encodeURIComponent(router.asPath)}`);
+      return;
+    }
+
+    if (requireDonorProfile && !donor) {
+      router.push('/auth/complete-profile');
+    }
+  }, [user, donor, loading, router, redirectTo, requireDonorProfile]);
+
+  return { user, donor, loading, isAuthenticated: !!user };
 }
