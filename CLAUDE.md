@@ -1,6 +1,7 @@
 # CLAUDE.md — MobilePantry Agent Handoff
 
 > **FOR AI AGENTS:** This file is your source of truth for task status. Before starting work:
+>
 > 1. Read this file to understand current state
 > 2. Check what's `[~] In Progress` — don't duplicate work
 > 3. Pick up `[ ] To Do` tasks in sprint order
@@ -14,33 +15,36 @@
 
 ## Quick Status
 
-| Sprint | Dates | Status |
-|--------|-------|--------|
-| Sprint 1 | Jan 15 - Jan 29 | 🔵 Active |
-| Sprint 2 | Jan 29 - Feb 12 | ⚪ Not Started |
+| Sprint   | Dates           | Status         |
+| -------- | --------------- | -------------- |
+| Sprint 1 | Jan 15 - Jan 29 | ✅ Complete    |
+| Sprint 2 | Jan 29 - Feb 12 | 🔵 Active      |
 | Sprint 3 | Feb 12 - Feb 26 | ⚪ Not Started |
 | Sprint 4 | Feb 26 - Mar 12 | ⚪ Not Started |
-| Launch | Mar 15 | ⚪ Target |
+| Launch   | Mar 15          | ⚪ Target      |
 
-**Current Focus:** Sprint 1 — Foundation (project setup, auth, database)
+**Current Focus:** Sprint 2 — Public Site + Donor Registration
 
 ---
 
 ## Sprint 1: Foundation (Jan 15 - Jan 29)
 
 ### Story 1.1: Project Infrastructure Setup
+
 - [x] Task 1.1.1: Initialize Next.js Project with Tailwind (2025-01-15)
 - [x] Task 1.1.2: Set Up shadcn/ui Component Library (2025-01-15)
 - [x] Task 1.1.3: Configure Firebase Project (2025-01-15)
 - [x] Task 1.1.4: Deploy to Vercel (2025-01-15)
 
 ### Story 1.2: Authentication System
+
 - [x] Task 1.2.1: Create Auth Context and Hooks (2026-01-20)
 - [x] Task 1.2.2: Build Login Page (2026-01-20)
 - [x] Task 1.2.3: Build Signup Page (2026-01-20)
 - [x] Task 1.2.4: Build Forgot Password Page (2026-01-20)
 
 ### Story 1.3: Database Schema Implementation
+
 - [x] Task 1.3.1: Define TypeScript Types and Firestore Schema (2026-01-20)
 - [x] Task 1.3.2: Create Database Helper Functions (2026-01-20)
 - [x] Task 1.3.3: Configure Firestore Security Rules (2026-01-20)
@@ -50,26 +54,30 @@
 ## Sprint 2: Public Site + Donor Registration (Jan 29 - Feb 12)
 
 ### Story 2.1: Public Marketing Website
-- [ ] Task 2.1.1: Create Shared Layout Component
-- [ ] Task 2.1.2: Build Homepage
-- [ ] Task 2.1.3: Build About Page
-- [ ] Task 2.1.4: Build Contact Page
+
+- [x] Task 2.1.1: Create Shared Layout Component (2026-01-27)
+- [x] Task 2.1.2: Build Homepage (2026-01-27)
+- [x] Task 2.1.3: Build About Page (2026-01-27)
+- [x] Task 2.1.4: Build Contact Page (2026-01-27)
 
 ### Story 2.2: Donor Onboarding Polish
-- [ ] Task 2.2.1: Build Google OAuth Profile Completion
-- [ ] Task 2.2.2: Implement Form Validation with React Hook Form
-- [ ] Task 2.2.3: Add Loading States and Success Messages
+
+- [x] Task 2.2.1: Build Google OAuth Profile Completion (2026-01-27)
+- [x] Task 2.2.2: Implement Form Validation with React Hook Form (2026-01-27)
+- [x] Task 2.2.3: Add Loading States and Success Messages (2026-01-27)
 
 ---
 
 ## Sprint 3: Donor Portal (Feb 12 - Feb 26)
 
 ### Story 3.1: Pickup Request Form
+
 - [ ] Task 3.1.1: Build Pickup Request Form UI
 - [ ] Task 3.1.2: Implement Pickup Request Submission
 - [ ] Task 3.1.3: Build Request Confirmation Page
 
 ### Story 3.2: Donor Dashboard
+
 - [ ] Task 3.2.1: Build Donor Dashboard Page
 - [ ] Task 3.2.2: Build Donation History Page
 - [ ] Task 3.2.3: Build Donor Settings Page
@@ -79,6 +87,7 @@
 ## Sprint 4: Admin Dashboard + Polish (Feb 26 - Mar 12)
 
 ### Story 4.1: Admin Dashboard
+
 - [ ] Task 4.1.1: Build Admin Dashboard Home
 - [ ] Task 4.1.2: Build Admin Requests List Page
 - [ ] Task 4.1.3: Build Admin Request Detail Page
@@ -86,10 +95,12 @@
 - [ ] Task 4.1.5: Build Admin Donor Detail Page
 
 ### Story 4.2: Slack Integration
+
 - [ ] Task 4.2.1: Set Up Slack App and Webhook
 - [ ] Task 4.2.2: Implement Slack Notification Function
 
 ### Story 4.3: Polish and Launch Prep
+
 - [ ] Task 4.3.1: Mobile Responsiveness Audit
 - [ ] Task 4.3.2: Error Handling and Loading States
 - [ ] Task 4.3.3: SEO and Meta Tags
@@ -103,6 +114,8 @@
 
 > Keep last 10 entries. Newest at top. Format: `YYYY-MM-DD @agent — what was done, decisions made, blockers`
 
+- 2026-01-27 @claude — Story 2.2 verified complete: Reviewed auth flow and fixed bug in login.tsx where Google OAuth wasn't checking for donor profile before redirect. All form validations (login, signup, forgot-password, complete-profile) confirmed working with React Hook Form + Zod. Loading states and success toasts present on all auth pages.
+- 2026-01-27 @claude — Story 2.1 completed: Created shared Layout components (Header with responsive nav, auth-aware user dropdown, mobile hamburger menu; Footer with logo, social links, email). Built Homepage recreating reference design with mission statement card, How accordion, Founders section (blue bg), Board section (white bg), and CTA. Created About page with mission, how we work, and our story sections. Created Contact page with contact info and "coming soon" form placeholder. All pages use consistent theming and are mobile responsive.
 - 2026-01-20 @claude — Stories 1.2 & 1.3 completed: Created AuthContext with Firebase Auth (email/password + Google OAuth), useAuth/useRequireAuth/useRequireAdmin hooks. Built login, signup, forgot-password, and complete-profile pages with React Hook Form + Zod validation. Created TypeScript types (Donor, PickupRequest, Address) and Firestore helper functions (donors.ts, pickups.ts, stats.ts). Added Firestore security rules with admin email allowlist. Also added NEXT_PUBLIC_ADMIN_EMAILS env var for client-side admin check.
 - 2025-01-15 @claude — Task 1.1.4 completed: Made GitHub repository public. Deployed to Vercel (Hobby plan) at https://mp-web-livid.vercel.app/. Configured all Firebase environment variables in Vercel dashboard. Verified automatic preview deployments working. Added deployment badge to README. Decision: Using james@mobilepantry.org Vercel account with Hobby plan for MVP.
 - 2025-01-15 @claude — Task 1.1.3 completed: Installed Firebase SDK. Created lib/firebase.ts with auth and Firestore initialization. Configured environment variables in .env.local and .env.local.example. Reused existing Firebase project (MobilePantry-MVP) with Email/Password and Google OAuth enabled. Verified connection after updating Firestore rules to test mode.
