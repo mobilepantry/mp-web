@@ -18,12 +18,12 @@
 | Sprint   | Dates           | Status         |
 | -------- | --------------- | -------------- |
 | Sprint 1 | Jan 15 - Jan 29 | ✅ Complete    |
-| Sprint 2 | Jan 29 - Feb 12 | 🔵 Active      |
-| Sprint 3 | Feb 12 - Feb 26 | ⚪ Not Started |
+| Sprint 2 | Jan 29 - Feb 12 | ✅ Complete    |
+| Sprint 3 | Feb 12 - Feb 26 | 🔵 Active      |
 | Sprint 4 | Feb 26 - Mar 12 | ⚪ Not Started |
 | Launch   | Mar 15          | ⚪ Target      |
 
-**Current Focus:** Sprint 2 — Public Site + Donor Registration
+**Current Focus:** Sprint 3 — Donor Portal
 
 ---
 
@@ -72,9 +72,9 @@
 
 ### Story 3.1: Pickup Request Form
 
-- [ ] Task 3.1.1: Build Pickup Request Form UI
-- [ ] Task 3.1.2: Implement Pickup Request Submission
-- [ ] Task 3.1.3: Build Request Confirmation Page
+- [x] Task 3.1.1: Build Pickup Request Form UI (2026-02-03)
+- [x] Task 3.1.2: Implement Pickup Request Submission (2026-02-03)
+- [x] Task 3.1.3: Build Request Confirmation Page (2026-02-03)
 
 ### Story 3.2: Donor Dashboard
 
@@ -114,6 +114,7 @@
 
 > Keep last 10 entries. Newest at top. Format: `YYYY-MM-DD @agent — what was done, decisions made, blockers`
 
+- 2026-02-03 @claude — Story 3.1 completed: Built pickup request form (donor/request.tsx) with all fields per spec: food description, estimated weight, address (pre-fills from donor profile with toggle), pickup date (defaults to today), time window select, contact on arrival, special instructions. Created API endpoint (api/pickup-requests.ts) that creates Firestore document and sends Slack notification. Built request detail page (donor/request/[id].tsx) with status-specific messaging, all request details, and Google Maps link. Created Zod validation schema and Slack notification lib.
 - 2026-01-27 @claude — Story 2.2 verified complete: Reviewed auth flow and fixed bug in login.tsx where Google OAuth wasn't checking for donor profile before redirect. All form validations (login, signup, forgot-password, complete-profile) confirmed working with React Hook Form + Zod. Loading states and success toasts present on all auth pages.
 - 2026-01-27 @claude — Story 2.1 completed: Created shared Layout components (Header with responsive nav, auth-aware user dropdown, mobile hamburger menu; Footer with logo, social links, email). Built Homepage recreating reference design with mission statement card, How accordion, Founders section (blue bg), Board section (white bg), and CTA. Created About page with mission, how we work, and our story sections. Created Contact page with contact info and "coming soon" form placeholder. All pages use consistent theming and are mobile responsive.
 - 2026-01-20 @claude — Stories 1.2 & 1.3 completed: Created AuthContext with Firebase Auth (email/password + Google OAuth), useAuth/useRequireAuth/useRequireAdmin hooks. Built login, signup, forgot-password, and complete-profile pages with React Hook Form + Zod validation. Created TypeScript types (Donor, PickupRequest, Address) and Firestore helper functions (donors.ts, pickups.ts, stats.ts). Added Firestore security rules with admin email allowlist. Also added NEXT_PUBLIC_ADMIN_EMAILS env var for client-side admin check.
