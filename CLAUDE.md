@@ -78,9 +78,9 @@
 
 ### Story 3.2: Donor Dashboard
 
-- [ ] Task 3.2.1: Build Donor Dashboard Page
-- [ ] Task 3.2.2: Build Donation History Page
-- [ ] Task 3.2.3: Build Donor Settings Page
+- [x] Task 3.2.1: Build Donor Dashboard Page (2026-02-10)
+- [x] Task 3.2.2: Build Donation History Page (2026-02-10)
+- [x] Task 3.2.3: Build Donor Settings Page (2026-02-10)
 
 ---
 
@@ -114,6 +114,7 @@
 
 > Keep last 10 entries. Newest at top. Format: `YYYY-MM-DD @agent — what was done, decisions made, blockers`
 
+- 2026-02-10 @claude — Story 3.2 completed: Built donor dashboard (donor/dashboard.tsx) with welcome header, impact stats cards (pounds donated, meals provided, total donations), pending requests section with status badges, and recent donations table with mobile card view. Built donation history page (donor/history.tsx) with full request list, status filter tabs (all/pending/confirmed/completed/cancelled), summary stats, and responsive table/card layout. Built donor settings page (donor/settings.tsx) with business profile edit form (React Hook Form + Zod), account settings (email display, password change for email/password users, Google OAuth info), and Firebase reauthentication for password changes. Added Settings link to Header dropdown and mobile menu. Build verified clean.
 - 2026-02-03 @claude — Story 3.1 completed: Built pickup request form (donor/request.tsx) with all fields per spec: food description, estimated weight, address (pre-fills from donor profile with toggle), pickup date (defaults to today), time window select, contact on arrival, special instructions. Created API endpoint (api/pickup-requests.ts) that creates Firestore document and sends Slack notification. Built request detail page (donor/request/[id].tsx) with status-specific messaging, all request details, and Google Maps link. Created Zod validation schema and Slack notification lib.
 - 2026-01-27 @claude — Story 2.2 verified complete: Reviewed auth flow and fixed bug in login.tsx where Google OAuth wasn't checking for donor profile before redirect. All form validations (login, signup, forgot-password, complete-profile) confirmed working with React Hook Form + Zod. Loading states and success toasts present on all auth pages.
 - 2026-01-27 @claude — Story 2.1 completed: Created shared Layout components (Header with responsive nav, auth-aware user dropdown, mobile hamburger menu; Footer with logo, social links, email). Built Homepage recreating reference design with mission statement card, How accordion, Founders section (blue bg), Board section (white bg), and CTA. Created About page with mission, how we work, and our story sections. Created Contact page with contact info and "coming soon" form placeholder. All pages use consistent theming and are mobile responsive.

@@ -73,6 +73,9 @@ export function Header() {
                       <DropdownMenuItem asChild>
                         <Link href="/donor/dashboard">Donor Dashboard</Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/donor/settings">Settings</Link>
+                      </DropdownMenuItem>
                       {isAdmin && (
                         <DropdownMenuItem asChild>
                           <Link href="/admin">Admin Dashboard</Link>
@@ -171,6 +174,13 @@ export function Header() {
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Donor Dashboard
+                      </Link>
+                      <Link
+                        href="/donor/settings"
+                        className="text-gray-700 hover:text-primary"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Settings
                       </Link>
                       {isAdmin && (
                         <Link
