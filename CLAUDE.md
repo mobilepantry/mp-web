@@ -19,11 +19,11 @@
 | -------- | --------------- | -------------- |
 | Sprint 1 | Jan 15 - Jan 29 | ✅ Complete    |
 | Sprint 2 | Jan 29 - Feb 12 | ✅ Complete    |
-| Sprint 3 | Feb 12 - Feb 26 | 🔵 Active      |
-| Sprint 4 | Feb 26 - Mar 12 | ⚪ Not Started |
+| Sprint 3 | Feb 12 - Feb 26 | ✅ Complete    |
+| Sprint 4 | Feb 26 - Mar 12 | 🔵 Active      |
 | Launch   | Mar 15          | ⚪ Target      |
 
-**Current Focus:** Sprint 3 — Donor Portal
+**Current Focus:** Sprint 4 — Admin Dashboard + Slack Integration
 
 ---
 
@@ -88,16 +88,16 @@
 
 ### Story 4.1: Admin Dashboard
 
-- [ ] Task 4.1.1: Build Admin Dashboard Home
-- [ ] Task 4.1.2: Build Admin Requests List Page
-- [ ] Task 4.1.3: Build Admin Request Detail Page
-- [ ] Task 4.1.4: Build Admin Donors List Page
-- [ ] Task 4.1.5: Build Admin Donor Detail Page
+- [x] Task 4.1.1: Build Admin Dashboard Home (2026-02-17)
+- [x] Task 4.1.2: Build Admin Requests List Page (2026-02-17)
+- [x] Task 4.1.3: Build Admin Request Detail Page (2026-02-17)
+- [x] Task 4.1.4: Build Admin Donors List Page (2026-02-17)
+- [x] Task 4.1.5: Build Admin Donor Detail Page (2026-02-17)
 
 ### Story 4.2: Slack Integration
 
-- [ ] Task 4.2.1: Set Up Slack App and Webhook
-- [ ] Task 4.2.2: Implement Slack Notification Function
+- [x] Task 4.2.1: Set Up Slack App and Webhook (2026-02-17)
+- [x] Task 4.2.2: Implement Slack Notification Function (2026-02-17)
 
 ### Story 4.3: Polish and Launch Prep
 
@@ -114,6 +114,7 @@
 
 > Keep last 10 entries. Newest at top. Format: `YYYY-MM-DD @agent — what was done, decisions made, blockers`
 
+- 2026-02-17 @claude — Stories 4.1 & 4.2 completed: Built full admin dashboard with 5 pages. Admin home (admin/index.tsx) with metrics cards (pending requests, weekly rescues, total pounds, active donors), pending requests list, and recent activity table. Admin requests list (admin/requests/index.tsx) with status filter tabs, pagination, desktop table + mobile cards. Admin request detail (admin/requests/[id].tsx) with status actions (confirm, mark completed with actual weight modal, cancel with confirmation dialog), donor info section, timeline, and "Open in Maps" link. Admin donors list (admin/donors/index.tsx) with search, sort (recent/A-Z/top donors), per-donor stats. Admin donor detail (admin/donors/[id].tsx) with impact stats, contact info, and full donation history. Enhanced Slack notification (lib/slack.ts) with admin dashboard link. Created docs/SLACK_SETUP.md. All pages use useRequireAdmin hook. Build verified clean.
 - 2026-02-10 @claude — Story 3.2 completed: Built donor dashboard (donor/dashboard.tsx) with welcome header, impact stats cards (pounds donated, meals provided, total donations), pending requests section with status badges, and recent donations table with mobile card view. Built donation history page (donor/history.tsx) with full request list, status filter tabs (all/pending/confirmed/completed/cancelled), summary stats, and responsive table/card layout. Built donor settings page (donor/settings.tsx) with business profile edit form (React Hook Form + Zod), account settings (email display, password change for email/password users, Google OAuth info), and Firebase reauthentication for password changes. Added Settings link to Header dropdown and mobile menu. Build verified clean.
 - 2026-02-03 @claude — Story 3.1 completed: Built pickup request form (donor/request.tsx) with all fields per spec: food description, estimated weight, address (pre-fills from donor profile with toggle), pickup date (defaults to today), time window select, contact on arrival, special instructions. Created API endpoint (api/pickup-requests.ts) that creates Firestore document and sends Slack notification. Built request detail page (donor/request/[id].tsx) with status-specific messaging, all request details, and Google Maps link. Created Zod validation schema and Slack notification lib.
 - 2026-01-27 @claude — Story 2.2 verified complete: Reviewed auth flow and fixed bug in login.tsx where Google OAuth wasn't checking for donor profile before redirect. All form validations (login, signup, forgot-password, complete-profile) confirmed working with React Hook Form + Zod. Loading states and success toasts present on all auth pages.
