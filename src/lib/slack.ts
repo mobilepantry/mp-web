@@ -119,6 +119,13 @@ export async function sendPickupNotification(
           ]
         : []),
       {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `<${process.env.NEXT_PUBLIC_APP_URL || 'https://mp-web-livid.vercel.app'}/admin/requests/${request.id}|View in Admin Dashboard>`,
+        },
+      },
+      {
         type: 'context',
         elements: [
           {
