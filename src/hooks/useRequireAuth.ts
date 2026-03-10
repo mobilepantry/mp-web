@@ -4,12 +4,12 @@ import { useAuth } from '@/lib/auth-context';
 
 interface UseRequireAuthOptions {
   redirectTo?: string;
-  requireDonorProfile?: boolean;
+  requireSupplierProfile?: boolean;
 }
 
 export function useRequireAuth(options: UseRequireAuthOptions = {}) {
-  const { redirectTo = '/auth/login', requireDonorProfile = true } = options;
-  const { user, donor, loading } = useAuth();
+  const { redirectTo = '/auth/login', requireSupplierProfile = true } = options;
+  const { user, supplier, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -20,10 +20,10 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
       return;
     }
 
-    if (requireDonorProfile && !donor) {
+    if (requireSupplierProfile && !supplier) {
       router.push('/auth/complete-profile');
     }
-  }, [user, donor, loading, router, redirectTo, requireDonorProfile]);
+  }, [user, supplier, loading, router, redirectTo, requireSupplierProfile]);
 
-  return { user, donor, loading, isAuthenticated: !!user };
+  return { user, supplier, loading, isAuthenticated: !!user };
 }

@@ -7,45 +7,95 @@ export interface Address {
   zip: string;
 }
 
-export type BusinessType = 'restaurant' | 'grocery' | 'caterer' | 'bakery' | 'corporate' | 'other';
+// --- Supplier (was Donor) ---
 
-export interface Donor {
+export type SupplierType =
+  | 'distributor'
+  | 'wholesale'
+  | 'farm'
+  | 'grocery'
+  | 'restaurant'
+  | 'processor'
+  | 'other';
+
+export interface Supplier {
   id: string;
   email: string;
   businessName: string;
   contactName: string;
   phone: string;
   address: Address;
-  businessType: BusinessType;
+  businessType: SupplierType;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
-export type PickupStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
-export type TimeWindow = 'morning' | 'afternoon' | 'evening';
+// --- Surplus Alert (was PickupRequest) ---
 
-export interface PickupRequest {
+export type AlertStatus = 'pending' | 'confirmed' | 'picked-up' | 'completed' | 'cancelled';
+export type TimeWindow = 'morning' | 'afternoon' | 'evening';
+export type ProduceCategory =
+  | 'fruits'
+  | 'vegetables'
+  | 'leafy-greens'
+  | 'root-vegetables'
+  | 'herbs'
+  | 'mixed'
+  | 'other';
+export type ProduceGrade = 'A' | 'B' | 'C';
+export type AlertType = 'ad-hoc' | 'standing';
+
+export interface SurplusAlert {
   id: string;
-  donorId: string;
-  status: PickupStatus;
-  foodDescription: string;
-  estimatedWeight: number;
+  supplierId: string;
+  status: AlertStatus;
+  produceDescription: string;
+  produceCategory: ProduceCategory[];
+  estimatedWeightLbs: number;
+  estimatedCaseCount?: number;
+  produceGrade?: ProduceGrade;
   pickupAddress: Address;
-  pickupDate: Timestamp;
+  pickupDate: string;
   pickupTimeWindow: TimeWindow;
+  alertType: AlertType;
   contactOnArrival: string;
   specialInstructions?: string;
-  actualWeight?: number;
+  actualWeightLbs?: number;
+  temperatureAtPickup?: number;
+  actualGrade?: ProduceGrade;
   confirmedAt?: Timestamp;
+  pickedUpAt?: Timestamp;
   completedAt?: Timestamp;
+  cancelledAt?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
 
 // For creating new records (omit auto-generated fields)
-export type CreateDonorInput = Omit<Donor, 'id' | 'createdAt' | 'updatedAt'>;
-export type CreatePickupInput = Omit<PickupRequest, 'id' | 'status' | 'confirmedAt' | 'completedAt' | 'createdAt' | 'updatedAt'>;
+export type CreateSupplierInput = Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateSurplusAlertInput = Omit<
+  SurplusAlert,
+  'id' | 'status' | 'actualWeightLbs' | 'temperatureAtPickup' | 'actualGrade' | 'createdAt' | 'updatedAt'
+>;
 
 // For updating records
-export type UpdateDonorInput = Partial<Omit<Donor, 'id' | 'createdAt' | 'updatedAt'>>;
-export type UpdatePickupInput = Partial<Omit<PickupRequest, 'id' | 'donorId' | 'createdAt'>>;
+export type UpdateSupplierInput = Partial<Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>>;
+export type UpdateSurplusAlertInput = Partial<Omit<SurplusAlert, 'id' | 'supplierId' | 'createdAt'>>;
+
+// Backward-compat aliases (to ease migration of pages)
+/** @deprecated Use Supplier */
+export type Donor = Supplier;
+/** @deprecated Use SupplierType */
+export type BusinessType = SupplierType;
+/** @deprecated Use AlertStatus */
+export type PickupStatus = AlertStatus;
+/** @deprecated Use SurplusAlert */
+export type PickupRequest = SurplusAlert;
+/** @deprecated Use CreateSupplierInput */
+export type CreateDonorInput = CreateSupplierInput;
+/** @deprecated Use CreateSurplusAlertInput */
+export type CreatePickupInput = CreateSurplusAlertInput;
+/** @deprecated Use UpdateSupplierInput */
+export type UpdateDonorInput = UpdateSupplierInput;
+/** @deprecated Use UpdateSurplusAlertInput */
+export type UpdatePickupInput = UpdateSurplusAlertInput;

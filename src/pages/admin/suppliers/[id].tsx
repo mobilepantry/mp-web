@@ -15,13 +15,14 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Truck,
 } from 'lucide-react';
 import { useRequireAdmin } from '@/hooks/useRequireAdmin';
 import { Layout } from '@/components/layout';
-import { getDonor } from '@/lib/db/donors';
-import { getPickupRequestsByDonor } from '@/lib/db/pickups';
-import { getDonorStats } from '@/lib/db/stats';
-import type { Donor, PickupRequest, PickupStatus } from '@/types';
+import { getSupplier } from '@/lib/db/suppliers';
+import { getAlertsBySupplier } from '@/lib/db/surplus-alerts';
+import { getSupplierStats } from '@/lib/db/stats';
+import type { Supplier, SurplusAlert, AlertStatus } from '@/types';
 import {
   Button,
   Card,
@@ -32,25 +33,38 @@ import {
 } from '@/components/ui';
 
 const STATUS_CONFIG: Record<
-  PickupStatus,
+  AlertStatus,
   { label: string; color: string }
 > = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   confirmed: { label: 'Confirmed', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  'picked-up': { label: 'Picked Up', color: 'bg-orange-100 text-orange-800 border-orange-200' },
   completed: { label: 'Completed', color: 'bg-green-100 text-green-800 border-green-200' },
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-200' },
 };
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
-  restaurant: 'Restaurant',
+  distributor: 'Distributor',
+  wholesale: 'Wholesale',
+  farm: 'Farm',
   grocery: 'Grocery Store',
+  restaurant: 'Restaurant',
+  processor: 'Processor',
   caterer: 'Caterer',
   bakery: 'Bakery',
   corporate: 'Corporate Cafeteria',
   other: 'Other',
 };
 
-function formatDate(timestamp: { toDate: () => Date } | Date): string {
+function formatDate(timestamp: { toDate: () => Date } | Date | string): string {
+  if (typeof timestamp === 'string') {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
   const date = 'toDate' in timestamp ? timestamp.toDate() : timestamp;
   return date.toLocaleDateString('en-US', {
     month: 'short',
@@ -63,12 +77,12 @@ function formatAddress(address: { street: string; city: string; state: string; z
   return `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
 }
 
-export default function AdminDonorDetailPage() {
+export default function AdminSupplierDetailPage() {
   const router = useRouter();
   const { id } = router.query;
   const { user, isAdmin, loading: authLoading } = useRequireAdmin();
-  const [donor, setDonor] = useState<Donor | null>(null);
-  const [requests, setRequests] = useState<PickupRequest[]>([]);
+  const [supplier, setSupplier] = useState<Supplier | null>(null);
+  const [alerts, setAlerts] = useState<SurplusAlert[]>([]);
   const [stats, setStats] = useState<{ totalPounds: number; totalRescues: number }>({
     totalPounds: 0,
     totalRescues: 0,
@@ -79,16 +93,16 @@ export default function AdminDonorDetailPage() {
     async function fetchData() {
       if (!id || typeof id !== 'string') return;
       try {
-        const [donorData, requestsData, statsData] = await Promise.all([
-          getDonor(id),
-          getPickupRequestsByDonor(id),
-          getDonorStats(id),
+        const [supplierData, alertsData, statsData] = await Promise.all([
+          getSupplier(id),
+          getAlertsBySupplier(id),
+          getSupplierStats(id),
         ]);
-        setDonor(donorData);
-        setRequests(requestsData);
+        setSupplier(supplierData);
+        setAlerts(alertsData);
         setStats(statsData);
       } catch (err) {
-        console.error('Error fetching donor:', err);
+        console.error('Error fetching supplier:', err);
       } finally {
         setLoading(false);
       }
@@ -108,14 +122,14 @@ export default function AdminDonorDetailPage() {
 
   if (!user || !isAdmin) return null;
 
-  if (!donor) {
+  if (!supplier) {
     return (
       <Layout>
         <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
           <div className="container mx-auto px-4 max-w-3xl text-center py-20">
-            <p className="text-gray-500 mb-4">Donor not found</p>
-            <Link href="/admin/donors">
-              <Button variant="outline">Back to Donors</Button>
+            <p className="text-gray-500 mb-4">Supplier not found</p>
+            <Link href="/admin/suppliers">
+              <Button variant="outline">Back to Suppliers</Button>
             </Link>
           </div>
         </div>
@@ -131,19 +145,19 @@ export default function AdminDonorDetailPage() {
         <div className="container mx-auto px-4 max-w-3xl">
           {/* Back Link */}
           <div className="mb-6">
-            <Link href="/admin/donors">
+            <Link href="/admin/suppliers">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Donors
+                Back to Suppliers
               </Button>
             </Link>
           </div>
 
-          {/* Donor Header */}
+          {/* Supplier Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">{donor.businessName}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{supplier.businessName}</h1>
             <p className="text-gray-500 mt-1">
-              Member since {formatDate(donor.createdAt)}
+              Member since {formatDate(supplier.createdAt)}
             </p>
           </div>
 
@@ -156,7 +170,7 @@ export default function AdminDonorDetailPage() {
                     <Package className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Total Donations</p>
+                    <p className="text-sm text-gray-500">Total Rescues</p>
                     <p className="text-2xl font-bold text-gray-900">{stats.totalRescues}</p>
                   </div>
                 </div>
@@ -205,51 +219,51 @@ export default function AdminDonorDetailPage() {
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-gray-400" />
                 <span className="text-gray-700">
-                  {BUSINESS_TYPE_LABELS[donor.businessType] || donor.businessType}
+                  {BUSINESS_TYPE_LABELS[supplier.businessType] || supplier.businessType}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-900">
-                  {donor.contactName}
+                  {supplier.contactName}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-gray-400" />
                 <a
-                  href={`mailto:${donor.email}`}
+                  href={`mailto:${supplier.email}`}
                   className="text-primary hover:underline text-sm"
                 >
-                  {donor.email}
+                  {supplier.email}
                 </a>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-gray-400" />
                 <a
-                  href={`tel:${donor.phone}`}
+                  href={`tel:${supplier.phone}`}
                   className="text-primary hover:underline text-sm"
                 >
-                  {donor.phone}
+                  {supplier.phone}
                 </a>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                 <span className="text-sm text-gray-700">
-                  {formatAddress(donor.address)}
+                  {formatAddress(supplier.address)}
                 </span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Donation History */}
+          {/* Alert History */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Donation History</CardTitle>
+              <CardTitle className="text-lg">Alert History</CardTitle>
             </CardHeader>
             <CardContent>
-              {requests.length === 0 ? (
+              {alerts.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No pickup requests yet</p>
+                  <p className="text-gray-500">No surplus alerts yet</p>
                 </div>
               ) : (
                 <>
@@ -259,31 +273,37 @@ export default function AdminDonorDetailPage() {
                       <thead>
                         <tr className="text-left text-sm text-gray-500 border-b">
                           <th className="pb-3 font-medium">Date</th>
-                          <th className="pb-3 font-medium">Description</th>
-                          <th className="pb-3 font-medium">Weight</th>
+                          <th className="pb-3 font-medium">Produce</th>
+                          <th className="pb-3 font-medium">Est. Wt</th>
+                          <th className="pb-3 font-medium">Actual Wt</th>
                           <th className="pb-3 font-medium">Status</th>
                           <th className="pb-3 font-medium"></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {requests.map((request) => {
-                          const config = STATUS_CONFIG[request.status];
+                        {alerts.map((alert) => {
+                          const config = STATUS_CONFIG[alert.status];
                           return (
                             <tr
-                              key={request.id}
+                              key={alert.id}
                               className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
                               onClick={() =>
-                                router.push(`/admin/requests/${request.id}`)
+                                router.push(`/admin/requests/${alert.id}`)
                               }
                             >
                               <td className="py-3 text-sm">
-                                {formatDate(request.createdAt)}
+                                {formatDate(alert.createdAt)}
                               </td>
                               <td className="py-3 text-sm max-w-[200px] truncate">
-                                {request.foodDescription}
+                                {alert.produceDescription}
                               </td>
                               <td className="py-3 text-sm">
-                                {request.actualWeight ?? request.estimatedWeight} lbs
+                                {alert.estimatedWeightLbs} lbs
+                              </td>
+                              <td className="py-3 text-sm">
+                                {alert.actualWeightLbs != null
+                                  ? `${alert.actualWeightLbs} lbs`
+                                  : '\u2014'}
                               </td>
                               <td className="py-3">
                                 <Badge className={config.color}>{config.label}</Badge>
@@ -300,26 +320,29 @@ export default function AdminDonorDetailPage() {
 
                   {/* Mobile Cards */}
                   <div className="sm:hidden space-y-3">
-                    {requests.map((request) => {
-                      const config = STATUS_CONFIG[request.status];
+                    {alerts.map((alert) => {
+                      const config = STATUS_CONFIG[alert.status];
                       return (
                         <Link
-                          key={request.id}
-                          href={`/admin/requests/${request.id}`}
+                          key={alert.id}
+                          href={`/admin/requests/${alert.id}`}
                           className="block"
                         >
                           <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-sm text-gray-500">
-                                {formatDate(request.createdAt)}
+                                {formatDate(alert.createdAt)}
                               </span>
                               <Badge className={config.color}>{config.label}</Badge>
                             </div>
                             <p className="text-sm text-gray-700 truncate">
-                              {request.foodDescription}
+                              {alert.produceDescription}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              {request.actualWeight ?? request.estimatedWeight} lbs
+                              Est: {alert.estimatedWeightLbs} lbs
+                              {alert.actualWeightLbs != null && (
+                                <span> &middot; Actual: {alert.actualWeightLbs} lbs</span>
+                              )}
                             </p>
                           </div>
                         </Link>

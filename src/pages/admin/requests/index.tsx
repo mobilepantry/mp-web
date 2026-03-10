@@ -6,14 +6,15 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Truck,
   ArrowLeft,
   ArrowRight,
 } from 'lucide-react';
 import { useRequireAdmin } from '@/hooks/useRequireAdmin';
 import { Layout } from '@/components/layout';
-import { getAllPickupRequests } from '@/lib/db/pickups';
-import { getAllDonors } from '@/lib/db/donors';
-import type { PickupRequest, PickupStatus, Donor } from '@/types';
+import { getAllSurplusAlerts } from '@/lib/db/surplus-alerts';
+import { getAllSuppliers } from '@/lib/db/suppliers';
+import type { SurplusAlert, AlertStatus, Supplier } from '@/types';
 import {
   Button,
   Card,
@@ -24,7 +25,7 @@ import {
 } from '@/components/ui';
 
 const STATUS_CONFIG: Record<
-  PickupStatus,
+  AlertStatus,
   { label: string; color: string; icon: React.ElementType }
 > = {
   pending: {
@@ -36,6 +37,11 @@ const STATUS_CONFIG: Record<
     label: 'Confirmed',
     color: 'bg-blue-100 text-blue-800 border-blue-200',
     icon: CheckCircle2,
+  },
+  'picked-up': {
+    label: 'Picked Up',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: Truck,
   },
   completed: {
     label: 'Completed',
@@ -49,15 +55,24 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const STATUS_TABS: { key: PickupStatus | 'all'; label: string }[] = [
+const STATUS_TABS: { key: AlertStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'pending', label: 'Pending' },
   { key: 'confirmed', label: 'Confirmed' },
+  { key: 'picked-up', label: 'Picked Up' },
   { key: 'completed', label: 'Completed' },
   { key: 'cancelled', label: 'Cancelled' },
 ];
 
-function formatDate(timestamp: { toDate: () => Date } | Date): string {
+function formatDate(timestamp: { toDate: () => Date } | Date | string): string {
+  if (typeof timestamp === 'string') {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
   const date = 'toDate' in timestamp ? timestamp.toDate() : timestamp;
   return date.toLocaleDateString('en-US', {
     month: 'short',
@@ -84,17 +99,17 @@ const PAGE_SIZE = 20;
 export default function AdminRequestsListPage() {
   const router = useRouter();
   const { user, isAdmin, loading: authLoading } = useRequireAdmin();
-  const [allRequests, setAllRequests] = useState<PickupRequest[]>([]);
-  const [donors, setDonors] = useState<Donor[]>([]);
+  const [allAlerts, setAllAlerts] = useState<SurplusAlert[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<PickupStatus | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<AlertStatus | 'all'>('all');
   const [page, setPage] = useState(0);
 
   // Read initial status filter from query param
   useEffect(() => {
     const { status } = router.query;
     if (status && STATUS_TABS.some((t) => t.key === status)) {
-      setActiveTab(status as PickupStatus | 'all');
+      setActiveTab(status as AlertStatus | 'all');
     }
   }, [router.query]);
 
@@ -102,14 +117,14 @@ export default function AdminRequestsListPage() {
     async function fetchData() {
       if (!user || !isAdmin) return;
       try {
-        const [requests, donorsList] = await Promise.all([
-          getAllPickupRequests(),
-          getAllDonors(),
+        const [alerts, suppliersList] = await Promise.all([
+          getAllSurplusAlerts(),
+          getAllSuppliers(),
         ]);
-        setAllRequests(requests);
-        setDonors(donorsList);
+        setAllAlerts(alerts);
+        setSuppliers(suppliersList);
       } catch (err) {
-        console.error('Error fetching requests:', err);
+        console.error('Error fetching alerts:', err);
       } finally {
         setLoading(false);
       }
@@ -119,21 +134,21 @@ export default function AdminRequestsListPage() {
     }
   }, [user, isAdmin]);
 
-  const donorMap = new Map(donors.map((d) => [d.id, d]));
+  const supplierMap = new Map(suppliers.map((s) => [s.id, s]));
 
-  const filteredRequests =
+  const filteredAlerts =
     activeTab === 'all'
-      ? allRequests
-      : allRequests.filter((r) => r.status === activeTab);
+      ? allAlerts
+      : allAlerts.filter((a) => a.status === activeTab);
 
-  const totalPages = Math.ceil(filteredRequests.length / PAGE_SIZE);
-  const paginatedRequests = filteredRequests.slice(
+  const totalPages = Math.ceil(filteredAlerts.length / PAGE_SIZE);
+  const paginatedAlerts = filteredAlerts.slice(
     page * PAGE_SIZE,
     (page + 1) * PAGE_SIZE
   );
 
   // Reset page when filter changes
-  function handleTabChange(tab: PickupStatus | 'all') {
+  function handleTabChange(tab: AlertStatus | 'all') {
     setActiveTab(tab);
     setPage(0);
   }
@@ -165,8 +180,8 @@ export default function AdminRequestsListPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Pickup Requests</h1>
-            <p className="text-sm text-gray-500">{filteredRequests.length} requests</p>
+            <h1 className="text-2xl font-bold text-gray-900">Surplus Alerts</h1>
+            <p className="text-sm text-gray-500">{filteredAlerts.length} alerts</p>
           </div>
 
           {/* Status Filter Tabs */}
@@ -174,8 +189,8 @@ export default function AdminRequestsListPage() {
             {STATUS_TABS.map((tab) => {
               const count =
                 tab.key === 'all'
-                  ? allRequests.length
-                  : allRequests.filter((r) => r.status === tab.key).length;
+                  ? allAlerts.length
+                  : allAlerts.filter((a) => a.status === tab.key).length;
               return (
                 <Button
                   key={tab.key}
@@ -189,13 +204,13 @@ export default function AdminRequestsListPage() {
             })}
           </div>
 
-          {/* Requests */}
+          {/* Alerts */}
           <Card>
             <CardContent className="p-0">
-              {paginatedRequests.length === 0 ? (
+              {paginatedAlerts.length === 0 ? (
                 <div className="text-center py-12">
                   <Clock className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No requests found</p>
+                  <p className="text-gray-500">No alerts found</p>
                 </div>
               ) : (
                 <>
@@ -205,40 +220,42 @@ export default function AdminRequestsListPage() {
                       <thead>
                         <tr className="text-left text-sm text-gray-500 border-b">
                           <th className="px-6 py-3 font-medium">Date</th>
-                          <th className="px-6 py-3 font-medium">Business</th>
-                          <th className="px-6 py-3 font-medium">Pickup Date</th>
-                          <th className="px-6 py-3 font-medium">Time</th>
-                          <th className="px-6 py-3 font-medium">Est. Weight</th>
+                          <th className="px-6 py-3 font-medium">Supplier</th>
+                          <th className="px-6 py-3 font-medium">Produce</th>
+                          <th className="px-6 py-3 font-medium">Est. Wt</th>
+                          <th className="px-6 py-3 font-medium">Actual Wt</th>
                           <th className="px-6 py-3 font-medium">Status</th>
                           <th className="px-6 py-3 font-medium"></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedRequests.map((request) => {
-                          const donor = donorMap.get(request.donorId);
-                          const config = STATUS_CONFIG[request.status];
+                        {paginatedAlerts.map((alert) => {
+                          const supplier = supplierMap.get(alert.supplierId);
+                          const config = STATUS_CONFIG[alert.status];
                           return (
                             <tr
-                              key={request.id}
+                              key={alert.id}
                               className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
                               onClick={() =>
-                                router.push(`/admin/requests/${request.id}`)
+                                router.push(`/admin/requests/${alert.id}`)
                               }
                             >
                               <td className="px-6 py-4 text-sm">
-                                {formatDate(request.createdAt)}
+                                {formatDate(alert.createdAt)}
                               </td>
                               <td className="px-6 py-4 text-sm font-medium">
-                                {donor?.businessName || 'Unknown'}
+                                {supplier?.businessName || 'Unknown'}
+                              </td>
+                              <td className="px-6 py-4 text-sm max-w-[200px] truncate">
+                                {alert.produceDescription}
                               </td>
                               <td className="px-6 py-4 text-sm">
-                                {formatDate(request.pickupDate)}
+                                {alert.estimatedWeightLbs} lbs
                               </td>
                               <td className="px-6 py-4 text-sm">
-                                {formatTimeWindow(request.pickupTimeWindow)}
-                              </td>
-                              <td className="px-6 py-4 text-sm">
-                                {request.estimatedWeight} lbs
+                                {alert.actualWeightLbs != null
+                                  ? `${alert.actualWeightLbs} lbs`
+                                  : '\u2014'}
                               </td>
                               <td className="px-6 py-4">
                                 <Badge className={config.color}>{config.label}</Badge>
@@ -255,29 +272,32 @@ export default function AdminRequestsListPage() {
 
                   {/* Mobile Cards */}
                   <div className="md:hidden divide-y">
-                    {paginatedRequests.map((request) => {
-                      const donor = donorMap.get(request.donorId);
-                      const config = STATUS_CONFIG[request.status];
+                    {paginatedAlerts.map((alert) => {
+                      const supplier = supplierMap.get(alert.supplierId);
+                      const config = STATUS_CONFIG[alert.status];
                       return (
                         <Link
-                          key={request.id}
-                          href={`/admin/requests/${request.id}`}
+                          key={alert.id}
+                          href={`/admin/requests/${alert.id}`}
                           className="block"
                         >
                           <div className="p-4 hover:bg-gray-50 transition-colors">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-sm font-medium text-gray-900">
-                                {donor?.businessName || 'Unknown'}
+                                {supplier?.businessName || 'Unknown'}
                               </span>
                               <Badge className={config.color}>{config.label}</Badge>
                             </div>
                             <p className="text-sm text-gray-700 truncate mb-1">
-                              {request.foodDescription}
+                              {alert.produceDescription}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {formatDate(request.pickupDate)} &middot;{' '}
-                              {formatTimeWindow(request.pickupTimeWindow)} &middot;{' '}
-                              ~{request.estimatedWeight} lbs
+                              {formatDate(alert.pickupDate)} &middot;{' '}
+                              {formatTimeWindow(alert.pickupTimeWindow)} &middot;{' '}
+                              ~{alert.estimatedWeightLbs} lbs
+                              {alert.actualWeightLbs != null && (
+                                <span> &middot; Actual: {alert.actualWeightLbs} lbs</span>
+                              )}
                             </p>
                           </div>
                         </Link>

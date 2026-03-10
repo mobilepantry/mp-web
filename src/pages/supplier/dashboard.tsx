@@ -1,22 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
 import {
   Loader2,
   Plus,
   Scale,
-  Utensils,
   Package,
   Clock,
   CheckCircle2,
   XCircle,
+  Truck,
   ArrowRight,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout';
-import { getPickupRequestsByDonor } from '@/lib/db/pickups';
-import { getDonorStats } from '@/lib/db/stats';
-import type { PickupRequest, PickupStatus } from '@/types';
+import { getAlertsBySupplier } from '@/lib/db/surplus-alerts';
+import { getSupplierStats } from '@/lib/db/stats';
+import type { SurplusAlert, AlertStatus } from '@/types';
 import {
   Button,
   Card,
@@ -28,7 +30,7 @@ import {
 } from '@/components/ui';
 
 const STATUS_CONFIG: Record<
-  PickupStatus,
+  AlertStatus,
   { label: string; color: string; icon: React.ElementType }
 > = {
   pending: {
@@ -40,6 +42,11 @@ const STATUS_CONFIG: Record<
     label: 'Confirmed',
     color: 'bg-blue-100 text-blue-800 border-blue-200',
     icon: CheckCircle2,
+  },
+  'picked-up': {
+    label: 'Picked Up',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: Truck,
   },
   completed: {
     label: 'Completed',
@@ -53,8 +60,8 @@ const STATUS_CONFIG: Record<
   },
 };
 
-function formatDate(timestamp: { toDate: () => Date } | Date): string {
-  const date = 'toDate' in timestamp ? timestamp.toDate() : timestamp;
+function formatDate(timestamp: { toDate: () => Date } | Date | string): string {
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : 'toDate' in timestamp ? timestamp.toDate() : timestamp;
   return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -75,38 +82,38 @@ function formatTimeWindow(window: string): string {
   }
 }
 
-export default function DonorDashboardPage() {
+export default function SupplierDashboardPage() {
   const router = useRouter();
-  const { user, donor, loading: authLoading } = useAuth();
-  const [requests, setRequests] = useState<PickupRequest[]>([]);
-  const [stats, setStats] = useState<{ totalPounds: number; totalRescues: number }>({
+  const { user, supplier, loading: authLoading } = useAuth();
+  const [alerts, setAlerts] = useState<SurplusAlert[]>([]);
+  const [stats, setStats] = useState<{ totalPounds: number; totalAlerts: number }>({
     totalPounds: 0,
-    totalRescues: 0,
+    totalAlerts: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        router.push('/auth/login?redirect=/donor/dashboard');
+        router.push('/auth/login?redirect=/supplier/dashboard');
         return;
       }
-      if (!donor) {
+      if (!supplier) {
         router.push('/auth/complete-profile');
       }
     }
-  }, [user, donor, authLoading, router]);
+  }, [user, supplier, authLoading, router]);
 
   useEffect(() => {
     async function fetchData() {
       if (!user) return;
 
       try {
-        const [requestsData, statsData] = await Promise.all([
-          getPickupRequestsByDonor(user.uid),
-          getDonorStats(user.uid),
+        const [alertsData, statsData] = await Promise.all([
+          getAlertsBySupplier(user.uid),
+          getSupplierStats(user.uid),
         ]);
-        setRequests(requestsData);
+        setAlerts(alertsData);
         setStats(statsData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -115,10 +122,10 @@ export default function DonorDashboardPage() {
       }
     }
 
-    if (user && donor) {
+    if (user && supplier) {
       fetchData();
     }
-  }, [user, donor]);
+  }, [user, supplier]);
 
   if (authLoading || loading) {
     return (
@@ -128,34 +135,36 @@ export default function DonorDashboardPage() {
     );
   }
 
-  if (!user || !donor) {
+  if (!user || !supplier) {
     return null;
   }
 
-  const pendingRequests = requests.filter(
-    (r) => r.status === 'pending' || r.status === 'confirmed'
+  const activeAlerts = alerts.filter(
+    (a) => a.status === 'pending' || a.status === 'confirmed'
   );
-  const recentDonations = requests.slice(0, 5);
-  const mealsProvided = Math.round(stats.totalPounds / 1.2);
+  const recentAlerts = alerts.slice(0, 5);
 
   return (
     <Layout>
+      <Head>
+        <title>Dashboard | MobilePantry</title>
+      </Head>
       <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Welcome Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Welcome back, {donor.businessName}
+                Welcome back, {supplier.businessName}
               </h1>
               <p className="text-gray-600 mt-1">
-                Thank you for helping rescue food in Columbus!
+                Thank you for helping rescue produce in Columbus!
               </p>
             </div>
-            <Link href="/donor/request">
+            <Link href="/supplier/alert">
               <Button size="lg">
                 <Plus className="mr-2 h-4 w-4" />
-                Request a Pickup
+                Submit Surplus Alert
               </Button>
             </Link>
           </div>
@@ -169,7 +178,7 @@ export default function DonorDashboardPage() {
                     <Scale className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Pounds Donated</p>
+                    <p className="text-sm text-gray-500">Pounds Rescued</p>
                     <p className="text-2xl font-bold text-gray-900">
                       {stats.totalPounds.toLocaleString()}
                     </p>
@@ -182,12 +191,12 @@ export default function DonorDashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-green-100 rounded-lg">
-                    <Utensils className="h-6 w-6 text-green-600" />
+                    <Bell className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Meals Provided</p>
+                    <p className="text-sm text-gray-500">Alerts Submitted</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {mealsProvided.toLocaleString()}
+                      {stats.totalAlerts}
                     </p>
                   </div>
                 </div>
@@ -201,9 +210,9 @@ export default function DonorDashboardPage() {
                     <Package className="h-6 w-6 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Total Donations</p>
+                    <p className="text-sm text-gray-500">Active Alerts</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {stats.totalRescues}
+                      {activeAlerts.length}
                     </p>
                   </div>
                 </div>
@@ -211,34 +220,34 @@ export default function DonorDashboardPage() {
             </Card>
           </div>
 
-          {/* Pending Requests */}
+          {/* Active Alerts */}
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="text-lg">Pending Requests</CardTitle>
+              <CardTitle className="text-lg">Active Alerts</CardTitle>
               <CardDescription>
-                Your active pickup requests
+                Your pending and confirmed surplus alerts
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {pendingRequests.length === 0 ? (
+              {activeAlerts.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No pending requests</p>
+                  <p className="text-gray-500">No surplus alerts yet</p>
                   <Link
-                    href="/donor/request"
+                    href="/supplier/alert"
                     className="text-primary hover:underline text-sm mt-2 inline-block"
                   >
-                    Request a pickup
+                    Submit your first surplus alert
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pendingRequests.map((request) => {
-                    const config = STATUS_CONFIG[request.status];
+                  {activeAlerts.map((alert) => {
+                    const config = STATUS_CONFIG[alert.status];
                     return (
                       <Link
-                        key={request.id}
-                        href={`/donor/request/${request.id}`}
+                        key={alert.id}
+                        href={`/supplier/alert/${alert.id}`}
                         className="block"
                       >
                         <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
@@ -248,15 +257,15 @@ export default function DonorDashboardPage() {
                                 {config.label}
                               </Badge>
                               <span className="text-sm text-gray-500">
-                                {formatDate(request.pickupDate)}
+                                {formatDate(alert.pickupDate)}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700 truncate">
-                              {request.foodDescription}
+                              {alert.produceDescription}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              {request.estimatedWeight} lbs &middot;{' '}
-                              {formatTimeWindow(request.pickupTimeWindow)}
+                              {alert.estimatedWeightLbs} lbs &middot;{' '}
+                              {formatTimeWindow(alert.pickupTimeWindow)}
                             </p>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-4" />
@@ -269,17 +278,17 @@ export default function DonorDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Recent Donations */}
+          {/* Recent Activity */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Recent Donations</CardTitle>
-                  <CardDescription>Your latest pickup requests</CardDescription>
+                  <CardTitle className="text-lg">Recent Activity</CardTitle>
+                  <CardDescription>Your latest surplus alerts</CardDescription>
                 </div>
-                {requests.length > 5 && (
+                {alerts.length > 5 && (
                   <Link
-                    href="/donor/history"
+                    href="/supplier/history"
                     className="text-sm text-primary hover:underline"
                   >
                     View all
@@ -288,17 +297,17 @@ export default function DonorDashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {recentDonations.length === 0 ? (
+              {recentAlerts.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500">
-                    You haven&apos;t made any donations yet
+                    No surplus alerts yet
                   </p>
                   <Link
-                    href="/donor/request"
+                    href="/supplier/alert"
                     className="text-primary hover:underline text-sm mt-2 inline-block"
                   >
-                    Make your first donation
+                    Submit your first surplus alert
                   </Link>
                 </div>
               ) : (
@@ -309,30 +318,30 @@ export default function DonorDashboardPage() {
                       <thead>
                         <tr className="text-left text-sm text-gray-500 border-b">
                           <th className="pb-3 font-medium">Date</th>
-                          <th className="pb-3 font-medium">Description</th>
+                          <th className="pb-3 font-medium">Produce</th>
                           <th className="pb-3 font-medium">Weight</th>
                           <th className="pb-3 font-medium">Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {recentDonations.map((request) => {
-                          const config = STATUS_CONFIG[request.status];
+                        {recentAlerts.map((alert) => {
+                          const config = STATUS_CONFIG[alert.status];
                           return (
                             <tr
-                              key={request.id}
+                              key={alert.id}
                               className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
                               onClick={() =>
-                                router.push(`/donor/request/${request.id}`)
+                                router.push(`/supplier/alert/${alert.id}`)
                               }
                             >
                               <td className="py-3 text-sm">
-                                {formatDate(request.createdAt)}
+                                {formatDate(alert.createdAt)}
                               </td>
                               <td className="py-3 text-sm max-w-[200px] truncate">
-                                {request.foodDescription}
+                                {alert.produceDescription}
                               </td>
                               <td className="py-3 text-sm">
-                                {request.actualWeight ?? request.estimatedWeight}{' '}
+                                {alert.actualWeightLbs ?? alert.estimatedWeightLbs}{' '}
                                 lbs
                               </td>
                               <td className="py-3">
@@ -349,28 +358,28 @@ export default function DonorDashboardPage() {
 
                   {/* Mobile Cards */}
                   <div className="sm:hidden space-y-3">
-                    {recentDonations.map((request) => {
-                      const config = STATUS_CONFIG[request.status];
+                    {recentAlerts.map((alert) => {
+                      const config = STATUS_CONFIG[alert.status];
                       return (
                         <Link
-                          key={request.id}
-                          href={`/donor/request/${request.id}`}
+                          key={alert.id}
+                          href={`/supplier/alert/${alert.id}`}
                           className="block"
                         >
                           <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-sm text-gray-500">
-                                {formatDate(request.createdAt)}
+                                {formatDate(alert.createdAt)}
                               </span>
                               <Badge className={config.color}>
                                 {config.label}
                               </Badge>
                             </div>
                             <p className="text-sm text-gray-700 truncate">
-                              {request.foodDescription}
+                              {alert.produceDescription}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              {request.actualWeight ?? request.estimatedWeight}{' '}
+                              {alert.actualWeightLbs ?? alert.estimatedWeightLbs}{' '}
                               lbs
                             </p>
                           </div>
