@@ -7,7 +7,7 @@ interface UseRequireAdminOptions {
 }
 
 export function useRequireAdmin(options: UseRequireAdminOptions = {}) {
-  const { redirectTo = '/donor/dashboard' } = options;
+  const { redirectTo = '/supplier/dashboard' } = options;
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
 

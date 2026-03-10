@@ -1,4 +1,4 @@
-import type { PickupRequest, Donor, Address } from '@/types';
+import type { SurplusAlert, Supplier, Address, ProduceCategory } from '@/types';
 
 function formatAddress(address: Address): string {
   return `${address.street}, ${address.city}, ${address.state} ${address.zip}`;
@@ -7,11 +7,11 @@ function formatAddress(address: Address): string {
 function formatTimeWindow(window: string): string {
   switch (window) {
     case 'morning':
-      return 'Morning (8am-12pm)';
+      return 'Morning (8am–12pm)';
     case 'afternoon':
-      return 'Afternoon (12pm-5pm)';
+      return 'Afternoon (12pm–5pm)';
     case 'evening':
-      return 'Evening (5pm-8pm)';
+      return 'Evening (5pm–8pm)';
     default:
       return window;
   }
@@ -27,9 +27,38 @@ function formatDate(dateString: string): string {
   });
 }
 
-export async function sendPickupNotification(
-  request: PickupRequest,
-  donor: Donor,
+const categoryEmoji: Record<ProduceCategory, string> = {
+  fruits: '🍎',
+  vegetables: '🥕',
+  'leafy-greens': '🥬',
+  'root-vegetables': '🥔',
+  herbs: '🌿',
+  mixed: '📦',
+  other: '🥗',
+};
+
+function formatCategories(categories: ProduceCategory[]): string {
+  return categories
+    .map((c) => `${categoryEmoji[c] || '📦'} ${c.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}`)
+    .join(', ');
+}
+
+function formatGrade(grade: string): string {
+  switch (grade) {
+    case 'A':
+      return 'A — Minor cosmetic';
+    case 'B':
+      return 'B — Noticeable blemishes, fully edible';
+    case 'C':
+      return 'C — Very ripe, use immediately';
+    default:
+      return grade;
+  }
+}
+
+export async function sendSurplusAlertNotification(
+  alert: SurplusAlert,
+  supplier: Supplier,
   pickupDateString: string
 ): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -39,7 +68,11 @@ export async function sendPickupNotification(
     return;
   }
 
-  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(formatAddress(request.pickupAddress))}`;
+  const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(formatAddress(alert.pickupAddress))}`;
+
+  const weightText = alert.estimatedCaseCount
+    ? `~${alert.estimatedWeightLbs} lbs (${alert.estimatedCaseCount} cases)`
+    : `~${alert.estimatedWeightLbs} lbs`;
 
   const message = {
     blocks: [
@@ -47,7 +80,7 @@ export async function sendPickupNotification(
         type: 'header',
         text: {
           type: 'plain_text',
-          text: '🚨 New Pickup Request',
+          text: '🥬 New Surplus Alert',
           emoji: true,
         },
       },
@@ -55,7 +88,7 @@ export async function sendPickupNotification(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*${donor.businessName}* has food ready for rescue!`,
+          text: `*${supplier.businessName}* has surplus produce available for rescue!`,
         },
       },
       {
@@ -66,14 +99,38 @@ export async function sendPickupNotification(
         fields: [
           {
             type: 'mrkdwn',
-            text: `:package: *Food*\n${request.foodDescription}`,
+            text: `:seedling: *Produce*\n${alert.produceDescription}`,
           },
           {
             type: 'mrkdwn',
-            text: `:scales: *Estimated Weight*\n~${request.estimatedWeight} lbs`,
+            text: `:scales: *Est. Weight*\n${weightText}`,
           },
         ],
       },
+      {
+        type: 'section',
+        fields: [
+          {
+            type: 'mrkdwn',
+            text: `:label: *Categories*\n${formatCategories(alert.produceCategory)}`,
+          },
+          {
+            type: 'mrkdwn',
+            text: `:clipboard: *Type*\n${alert.alertType === 'standing' ? 'Standing Weekly' : 'Ad-hoc'}`,
+          },
+        ],
+      },
+      ...(alert.produceGrade
+        ? [
+            {
+              type: 'section' as const,
+              text: {
+                type: 'mrkdwn' as const,
+                text: `:mag: *Grade*\n${formatGrade(alert.produceGrade)}`,
+              },
+            },
+          ]
+        : []),
       {
         type: 'section',
         fields: [
@@ -83,7 +140,7 @@ export async function sendPickupNotification(
           },
           {
             type: 'mrkdwn',
-            text: `:clock3: *Time Window*\n${formatTimeWindow(request.pickupTimeWindow)}`,
+            text: `:clock3: *Time Window*\n${formatTimeWindow(alert.pickupTimeWindow)}`,
           },
         ],
       },
@@ -91,7 +148,7 @@ export async function sendPickupNotification(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `:round_pushpin: *Pickup Location*\n${formatAddress(request.pickupAddress)}\n<${mapsUrl}|Open in Google Maps>`,
+          text: `:round_pushpin: *Pickup Location*\n${formatAddress(alert.pickupAddress)}\n<${mapsUrl}|Open in Google Maps>`,
         },
       },
       {
@@ -99,21 +156,21 @@ export async function sendPickupNotification(
         fields: [
           {
             type: 'mrkdwn',
-            text: `:bust_in_silhouette: *Contact*\n${donor.contactName}`,
+            text: `:bust_in_silhouette: *Contact*\n${supplier.contactName}`,
           },
           {
             type: 'mrkdwn',
-            text: `:telephone_receiver: *On Arrival*\n${request.contactOnArrival}`,
+            text: `:telephone_receiver: *On Arrival*\n${alert.contactOnArrival}`,
           },
         ],
       },
-      ...(request.specialInstructions
+      ...(alert.specialInstructions
         ? [
             {
-              type: 'section',
+              type: 'section' as const,
               text: {
-                type: 'mrkdwn',
-                text: `:memo: *Special Instructions*\n${request.specialInstructions}`,
+                type: 'mrkdwn' as const,
+                text: `:memo: *Special Instructions*\n${alert.specialInstructions}`,
               },
             },
           ]
@@ -122,7 +179,7 @@ export async function sendPickupNotification(
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `<${process.env.NEXT_PUBLIC_APP_URL || 'https://mp-web-livid.vercel.app'}/admin/requests/${request.id}|View in Admin Dashboard>`,
+          text: `<${process.env.NEXT_PUBLIC_APP_URL || 'https://mp-web-livid.vercel.app'}/admin/requests/${alert.id}|View in Ops Dashboard>`,
         },
       },
       {
@@ -130,7 +187,7 @@ export async function sendPickupNotification(
         elements: [
           {
             type: 'mrkdwn',
-            text: `Request ID: \`${request.id}\``,
+            text: `Alert ID: \`${alert.id}\``,
           },
         ],
       },
@@ -151,3 +208,7 @@ export async function sendPickupNotification(
     console.error('Error sending Slack notification:', error);
   }
 }
+
+// Backward-compat alias
+/** @deprecated Use sendSurplusAlertNotification */
+export const sendPickupNotification = sendSurplusAlertNotification;

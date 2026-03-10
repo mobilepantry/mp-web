@@ -1,30 +1,12 @@
-import Link from 'next/link';
-import Image from 'next/image';
-
-const INSTAGRAM_URL = 'https://www.instagram.com/mobilepantryapp';
-const LINKEDIN_URL = 'https://www.linkedin.com/company/mobilepantry/';
-const EMAIL = 'info@mobilepantry.org';
-
 export function Footer() {
   return (
     <footer className="w-full bg-white border-t-4 border-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/MobilePantry primary blue .svg"
-              alt="MobilePantry"
-              width={48}
-              height={48}
-              className="h-12 w-auto"
-            />
-          </Link>
-
           {/* Social Icons */}
           <div className="flex items-center gap-4">
             <a
-              href={INSTAGRAM_URL}
+              href="https://www.instagram.com/mobilepantryapp"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:text-primary/80 transition-colors"
@@ -33,7 +15,7 @@ export function Footer() {
               <InstagramIcon className="w-6 h-6" />
             </a>
             <a
-              href={LINKEDIN_URL}
+              href="https://www.linkedin.com/company/mobilepantry/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:text-primary/80 transition-colors"
@@ -43,18 +25,31 @@ export function Footer() {
             </a>
           </div>
 
-          {/* Contact Email */}
-          <a
-            href={`mailto:${EMAIL}`}
-            className="text-primary hover:text-primary/80 transition-colors font-medium"
-          >
-            {EMAIL}
-          </a>
+          {/* External Links */}
+          <div className="flex items-center gap-4 text-sm font-medium">
+            <a
+              href="https://mobilepantry.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary/80 transition-colors"
+            >
+              mobilepantry.org
+            </a>
+            <span className="text-gray-300">|</span>
+            <a
+              href="https://shop.mobilepantry.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary/80 transition-colors"
+            >
+              Shop
+            </a>
+          </div>
         </div>
 
         {/* Copyright */}
         <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} MobilePantry. All rights reserved.</p>
+          <p>&copy; 2026 MobilePantry &middot; Driving to End Hunger</p>
         </div>
       </div>
     </footer>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -10,13 +11,20 @@ import {
   CheckCircle2,
   ArrowRight,
   RefreshCw,
+  Thermometer,
+  Truck,
 } from 'lucide-react';
 import { useRequireAdmin } from '@/hooks/useRequireAdmin';
 import { Layout } from '@/components/layout';
-import { getAllPickupRequests, getPendingPickupRequests } from '@/lib/db/pickups';
-import { getTotalPoundsRescued, getActiveDonorsCount } from '@/lib/db/stats';
-import { getAllDonors } from '@/lib/db/donors';
-import type { PickupRequest, Donor } from '@/types';
+import { getAllSurplusAlerts, getPendingAlerts } from '@/lib/db/surplus-alerts';
+import {
+  getActiveSuppliersCount,
+  getWeeklyPoundsRescued,
+  getAvgPickupTemperature,
+  getAlertCountByStatus,
+} from '@/lib/db/stats';
+import { getAllSuppliers } from '@/lib/db/suppliers';
+import type { SurplusAlert, AlertStatus, Supplier } from '@/types';
 import {
   Button,
   Card,
@@ -27,7 +35,46 @@ import {
   Badge,
 } from '@/components/ui';
 
-function formatDate(timestamp: { toDate: () => Date } | Date): string {
+const STATUS_CONFIG: Record<
+  AlertStatus,
+  { label: string; color: string; icon: React.ElementType }
+> = {
+  pending: {
+    label: 'Pending',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    icon: Clock,
+  },
+  confirmed: {
+    label: 'Confirmed',
+    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    icon: CheckCircle2,
+  },
+  'picked-up': {
+    label: 'Picked Up',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+    icon: Truck,
+  },
+  completed: {
+    label: 'Completed',
+    color: 'bg-green-100 text-green-800 border-green-200',
+    icon: CheckCircle2,
+  },
+  cancelled: {
+    label: 'Cancelled',
+    color: 'bg-red-100 text-red-800 border-red-200',
+    icon: Clock,
+  },
+};
+
+function formatDate(timestamp: { toDate: () => Date } | Date | string): string {
+  if (typeof timestamp === 'string') {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
   const date = 'toDate' in timestamp ? timestamp.toDate() : timestamp;
   return date.toLocaleDateString('en-US', {
     month: 'short',
@@ -49,49 +96,59 @@ function formatTimeWindow(window: string): string {
   }
 }
 
+function getTempColor(temp: number): string {
+  if (temp <= 38) return 'text-green-600';
+  if (temp <= 41) return 'text-yellow-600';
+  return 'text-red-600';
+}
+
+function getTempBgColor(temp: number): string {
+  if (temp <= 38) return 'bg-green-100';
+  if (temp <= 41) return 'bg-yellow-100';
+  return 'bg-red-100';
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isAdmin, loading: authLoading } = useRequireAdmin();
-  const [pendingRequests, setPendingRequests] = useState<PickupRequest[]>([]);
-  const [recentCompleted, setRecentCompleted] = useState<PickupRequest[]>([]);
-  const [donors, setDonors] = useState<Donor[]>([]);
-  const [totalPounds, setTotalPounds] = useState(0);
-  const [activeDonors, setActiveDonors] = useState(0);
-  const [weeklyRescues, setWeeklyRescues] = useState(0);
+  const [pendingAlerts, setPendingAlerts] = useState<SurplusAlert[]>([]);
+  const [recentCompleted, setRecentCompleted] = useState<SurplusAlert[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [weeklyPounds, setWeeklyPounds] = useState(0);
+  const [suppliersCount, setSuppliersCount] = useState(0);
+  const [avgTemp, setAvgTemp] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   async function fetchData() {
     try {
-      const [pending, allRequests, pounds, donorCount, donorsList] = await Promise.all([
-        getPendingPickupRequests(),
-        getAllPickupRequests(),
-        getTotalPoundsRescued(),
-        getActiveDonorsCount(),
-        getAllDonors(),
+      const [
+        pending,
+        allAlerts,
+        weekly,
+        activeSuppliers,
+        temperature,
+        suppliersList,
+      ] = await Promise.all([
+        getPendingAlerts(),
+        getAllSurplusAlerts(),
+        getWeeklyPoundsRescued(),
+        getActiveSuppliersCount(),
+        getAvgPickupTemperature(),
+        getAllSuppliers(),
       ]);
 
-      setPendingRequests(pending);
-      setTotalPounds(pounds);
-      setActiveDonors(donorCount);
-      setDonors(donorsList);
+      setPendingAlerts(pending);
+      setPendingCount(pending.length);
+      setWeeklyPounds(weekly);
+      setSuppliersCount(activeSuppliers);
+      setAvgTemp(temperature);
+      setSuppliers(suppliersList);
 
-      // Completed pickups
-      const completed = allRequests.filter((r) => r.status === 'completed');
+      // Completed alerts
+      const completed = allAlerts.filter((a) => a.status === 'completed');
       setRecentCompleted(completed.slice(0, 5));
-
-      // Rescues this week
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const thisWeek = completed.filter((r) => {
-        const date = r.completedAt
-          ? 'toDate' in r.completedAt
-            ? r.completedAt.toDate()
-            : r.completedAt
-          : null;
-        return date && date >= oneWeekAgo;
-      });
-      setWeeklyRescues(thisWeek.length);
     } catch (err) {
       console.error('Error fetching admin dashboard data:', err);
     } finally {
@@ -111,8 +168,8 @@ export default function AdminDashboardPage() {
     fetchData();
   }
 
-  // Build a donor lookup map for displaying business names
-  const donorMap = new Map(donors.map((d) => [d.id, d]));
+  // Build a supplier lookup map for displaying business names
+  const supplierMap = new Map(suppliers.map((s) => [s.id, s]));
 
   if (authLoading || loading) {
     return (
@@ -128,6 +185,9 @@ export default function AdminDashboardPage() {
 
   return (
     <Layout>
+      <Head>
+        <title>Ops Dashboard | MobilePantry</title>
+      </Head>
       <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           {/* Header */}
@@ -135,7 +195,7 @@ export default function AdminDashboardPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-gray-600 mt-1">
-                Manage pickup requests and donor relationships
+                Manage surplus alerts and supplier relationships
               </p>
             </div>
             <div className="flex gap-2">
@@ -144,10 +204,10 @@ export default function AdminDashboardPage() {
                 Refresh
               </Button>
               <Link href="/admin/requests">
-                <Button variant="outline">View All Requests</Button>
+                <Button variant="outline">View All Alerts</Button>
               </Link>
-              <Link href="/admin/donors">
-                <Button variant="outline">View All Donors</Button>
+              <Link href="/admin/suppliers">
+                <Button variant="outline">View All Suppliers</Button>
               </Link>
             </div>
           </div>
@@ -162,9 +222,9 @@ export default function AdminDashboardPage() {
                       <Clock className="h-6 w-6 text-yellow-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Pending Requests</p>
+                      <p className="text-sm text-gray-500">Pending Alerts</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        {pendingRequests.length}
+                        {pendingCount}
                       </p>
                     </div>
                   </div>
@@ -176,33 +236,19 @@ export default function AdminDashboardPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-blue-100 rounded-lg">
-                    <Package className="h-6 w-6 text-blue-600" />
+                    <Scale className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Rescues This Week</p>
-                    <p className="text-2xl font-bold text-gray-900">{weeklyRescues}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <Scale className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Total Pounds Rescued</p>
+                    <p className="text-sm text-gray-500">Lbs Rescued This Week</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {totalPounds.toLocaleString()}
+                      {weeklyPounds.toLocaleString()}
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Link href="/admin/donors">
+            <Link href="/admin/suppliers">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-4">
@@ -210,45 +256,61 @@ export default function AdminDashboardPage() {
                       <Users className="h-6 w-6 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Active Donors</p>
-                      <p className="text-2xl font-bold text-gray-900">{activeDonors}</p>
+                      <p className="text-sm text-gray-500">Active Suppliers</p>
+                      <p className="text-2xl font-bold text-gray-900">{suppliersCount}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </Link>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-lg ${avgTemp !== null ? getTempBgColor(avgTemp) : 'bg-gray-100'}`}>
+                    <Thermometer className={`h-6 w-6 ${avgTemp !== null ? getTempColor(avgTemp) : 'text-gray-600'}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Avg Pickup Temp</p>
+                    <p className={`text-2xl font-bold ${avgTemp !== null ? getTempColor(avgTemp) : 'text-gray-900'}`}>
+                      {avgTemp !== null ? `${avgTemp.toFixed(1)}\u00B0F` : '\u2014'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Pending Requests */}
+          {/* Pending Alerts */}
           <Card className="mb-8">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Pending Requests</CardTitle>
-                  <CardDescription>Requests awaiting confirmation</CardDescription>
+                  <CardTitle className="text-lg">Pending Alerts</CardTitle>
+                  <CardDescription>Alerts awaiting confirmation</CardDescription>
                 </div>
                 <Link
                   href="/admin/requests?status=pending"
                   className="text-sm text-primary hover:underline"
                 >
-                  View all requests
+                  View all alerts
                 </Link>
               </div>
             </CardHeader>
             <CardContent>
-              {pendingRequests.length === 0 ? (
+              {pendingAlerts.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle2 className="h-10 w-10 text-green-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No pending requests — all caught up!</p>
+                  <p className="text-gray-500">No pending alerts — all caught up!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {pendingRequests.map((request) => {
-                    const donor = donorMap.get(request.donorId);
+                  {pendingAlerts.map((alert) => {
+                    const supplier = supplierMap.get(alert.supplierId);
                     return (
                       <Link
-                        key={request.id}
-                        href={`/admin/requests/${request.id}`}
+                        key={alert.id}
+                        href={`/admin/requests/${alert.id}`}
                         className="block"
                       >
                         <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
@@ -258,16 +320,23 @@ export default function AdminDashboardPage() {
                                 Pending
                               </Badge>
                               <span className="text-sm font-medium text-gray-900">
-                                {donor?.businessName || 'Unknown Donor'}
+                                {supplier?.businessName || 'Unknown Supplier'}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700 truncate">
-                              {request.foodDescription}
+                              {alert.produceDescription}
                             </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {alert.produceCategory?.map((cat) => (
+                                <Badge key={cat} className="bg-gray-100 text-gray-600 border-gray-200 text-xs">
+                                  {cat}
+                                </Badge>
+                              ))}
+                            </div>
                             <p className="text-xs text-gray-500 mt-1">
-                              {formatDate(request.pickupDate)} &middot;{' '}
-                              {formatTimeWindow(request.pickupTimeWindow)} &middot;{' '}
-                              ~{request.estimatedWeight} lbs
+                              {formatDate(alert.pickupDate)} &middot;{' '}
+                              {formatTimeWindow(alert.pickupTimeWindow)} &middot;{' '}
+                              ~{alert.estimatedWeightLbs} lbs
                             </p>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-4" />
@@ -310,33 +379,42 @@ export default function AdminDashboardPage() {
                       <thead>
                         <tr className="text-left text-sm text-gray-500 border-b">
                           <th className="pb-3 font-medium">Date</th>
-                          <th className="pb-3 font-medium">Business</th>
-                          <th className="pb-3 font-medium">Description</th>
+                          <th className="pb-3 font-medium">Supplier</th>
+                          <th className="pb-3 font-medium">Produce</th>
                           <th className="pb-3 font-medium">Weight</th>
+                          <th className="pb-3 font-medium">Temp</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {recentCompleted.map((request) => {
-                          const donor = donorMap.get(request.donorId);
+                        {recentCompleted.map((alert) => {
+                          const supplier = supplierMap.get(alert.supplierId);
+                          const weight = alert.actualWeightLbs ?? alert.estimatedWeightLbs;
                           return (
                             <tr
-                              key={request.id}
+                              key={alert.id}
                               className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
-                              onClick={() => router.push(`/admin/requests/${request.id}`)}
+                              onClick={() => router.push(`/admin/requests/${alert.id}`)}
                             >
                               <td className="py-3 text-sm">
-                                {request.completedAt
-                                  ? formatDate(request.completedAt)
-                                  : formatDate(request.createdAt)}
+                                {formatDate(alert.createdAt)}
                               </td>
                               <td className="py-3 text-sm font-medium">
-                                {donor?.businessName || 'Unknown'}
+                                {supplier?.businessName || 'Unknown'}
                               </td>
                               <td className="py-3 text-sm max-w-[200px] truncate">
-                                {request.foodDescription}
+                                {alert.produceDescription}
                               </td>
                               <td className="py-3 text-sm">
-                                {request.actualWeight ?? request.estimatedWeight} lbs
+                                {weight} lbs
+                              </td>
+                              <td className="py-3 text-sm">
+                                {alert.temperatureAtPickup != null ? (
+                                  <span className={getTempColor(alert.temperatureAtPickup)}>
+                                    {alert.temperatureAtPickup}{'\u00B0'}F
+                                  </span>
+                                ) : (
+                                  '\u2014'
+                                )}
                               </td>
                             </tr>
                           );
@@ -347,30 +425,34 @@ export default function AdminDashboardPage() {
 
                   {/* Mobile Cards */}
                   <div className="sm:hidden space-y-3">
-                    {recentCompleted.map((request) => {
-                      const donor = donorMap.get(request.donorId);
+                    {recentCompleted.map((alert) => {
+                      const supplier = supplierMap.get(alert.supplierId);
+                      const weight = alert.actualWeightLbs ?? alert.estimatedWeightLbs;
                       return (
                         <Link
-                          key={request.id}
-                          href={`/admin/requests/${request.id}`}
+                          key={alert.id}
+                          href={`/admin/requests/${alert.id}`}
                           className="block"
                         >
                           <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-sm font-medium text-gray-900">
-                                {donor?.businessName || 'Unknown'}
+                                {supplier?.businessName || 'Unknown'}
                               </span>
                               <span className="text-xs text-gray-500">
-                                {request.completedAt
-                                  ? formatDate(request.completedAt)
-                                  : formatDate(request.createdAt)}
+                                {formatDate(alert.createdAt)}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700 truncate">
-                              {request.foodDescription}
+                              {alert.produceDescription}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              {request.actualWeight ?? request.estimatedWeight} lbs
+                              {weight} lbs
+                              {alert.temperatureAtPickup != null && (
+                                <span className={`ml-2 ${getTempColor(alert.temperatureAtPickup)}`}>
+                                  {alert.temperatureAtPickup}{'\u00B0'}F
+                                </span>
+                              )}
                             </p>
                           </div>
                         </Link>

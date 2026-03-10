@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,8 +20,8 @@ import {
 } from 'firebase/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout';
-import { updateDonor } from '@/lib/db/donors';
-import type { BusinessType } from '@/types';
+import { updateSupplier } from '@/lib/db/suppliers';
+import type { SupplierType } from '@/types';
 import {
   Button,
   Input,
@@ -37,12 +38,13 @@ import {
   SelectValue,
 } from '@/components/ui';
 
-const BUSINESS_TYPES: { value: BusinessType; label: string }[] = [
-  { value: 'restaurant', label: 'Restaurant' },
+const BUSINESS_TYPES: { value: SupplierType; label: string }[] = [
+  { value: 'distributor', label: 'Distributor' },
+  { value: 'wholesale', label: 'Wholesale' },
+  { value: 'farm', label: 'Farm' },
   { value: 'grocery', label: 'Grocery Store' },
-  { value: 'caterer', label: 'Caterer' },
-  { value: 'bakery', label: 'Bakery' },
-  { value: 'corporate', label: 'Corporate Cafeteria' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'processor', label: 'Processor' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -63,7 +65,7 @@ const profileSchema = z.object({
   state: z.string().min(2, 'State is required'),
   zip: z.string().regex(/^\d{5}$/, 'ZIP must be 5 digits'),
   businessType: z.enum(
-    ['restaurant', 'grocery', 'caterer', 'bakery', 'corporate', 'other'],
+    ['distributor', 'wholesale', 'farm', 'grocery', 'restaurant', 'processor', 'other'],
     { message: 'Business type is required' }
   ),
 });
@@ -87,9 +89,9 @@ function isEmailPasswordUser(providerData: { providerId: string }[]): boolean {
   return providerData.some((p) => p.providerId === 'password');
 }
 
-export default function DonorSettingsPage() {
+export default function SupplierSettingsPage() {
   const router = useRouter();
-  const { user, donor, loading: authLoading, refreshDonor } = useAuth();
+  const { user, supplier, loading: authLoading, refreshSupplier } = useAuth();
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
@@ -120,37 +122,37 @@ export default function DonorSettingsPage() {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        router.push('/auth/login?redirect=/donor/settings');
+        router.push('/auth/login?redirect=/supplier/settings');
         return;
       }
-      if (!donor) {
+      if (!supplier) {
         router.push('/auth/complete-profile');
       }
     }
-  }, [user, donor, authLoading, router]);
+  }, [user, supplier, authLoading, router]);
 
-  // Pre-fill profile form with current donor data
+  // Pre-fill profile form with current supplier data
   useEffect(() => {
-    if (donor) {
+    if (supplier) {
       resetProfile({
-        businessName: donor.businessName,
-        contactName: donor.contactName,
-        phone: donor.phone,
-        street: donor.address.street,
-        city: donor.address.city,
-        state: donor.address.state,
-        zip: donor.address.zip,
-        businessType: donor.businessType,
+        businessName: supplier.businessName,
+        contactName: supplier.contactName,
+        phone: supplier.phone,
+        street: supplier.address.street,
+        city: supplier.address.city,
+        state: supplier.address.state,
+        zip: supplier.address.zip,
+        businessType: supplier.businessType,
       });
     }
-  }, [donor, resetProfile]);
+  }, [supplier, resetProfile]);
 
   const onSaveProfile = async (data: ProfileFormData) => {
     if (!user) return;
 
     setIsSavingProfile(true);
     try {
-      await updateDonor(user.uid, {
+      await updateSupplier(user.uid, {
         businessName: data.businessName,
         contactName: data.contactName,
         phone: data.phone,
@@ -162,7 +164,7 @@ export default function DonorSettingsPage() {
         },
         businessType: data.businessType,
       });
-      await refreshDonor();
+      await refreshSupplier();
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -206,7 +208,7 @@ export default function DonorSettingsPage() {
     );
   }
 
-  if (!user || !donor) {
+  if (!user || !supplier) {
     return null;
   }
 
@@ -217,19 +219,22 @@ export default function DonorSettingsPage() {
 
   return (
     <Layout>
+      <Head>
+        <title>Settings | MobilePantry</title>
+      </Head>
       <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-2xl">
           <Link
-            href="/donor/dashboard"
+            href="/supplier/dashboard"
             className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Dashboard
           </Link>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-8">Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-8">Supplier Settings</h1>
 
-          {/* Business Profile */}
+          {/* Supplier Profile */}
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -237,7 +242,7 @@ export default function DonorSettingsPage() {
                   <Building2 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Business Profile</CardTitle>
+                  <CardTitle className="text-lg">Supplier Profile</CardTitle>
                   <CardDescription>
                     Update your business information
                   </CardDescription>
@@ -369,7 +374,7 @@ export default function DonorSettingsPage() {
                   <Select
                     value={businessType}
                     onValueChange={(value) =>
-                      setProfileValue('businessType', value as BusinessType)
+                      setProfileValue('businessType', value as SupplierType)
                     }
                   >
                     <SelectTrigger>

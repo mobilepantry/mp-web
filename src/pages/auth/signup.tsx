@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
@@ -9,8 +10,8 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getAuthErrorMessage } from '@/lib/firebase-errors';
 import { signupSchema, type SignupFormData } from '@/lib/validations/auth';
-import { createDonor } from '@/lib/db/donors';
-import type { BusinessType } from '@/types';
+import { createSupplier } from '@/lib/db/suppliers';
+import type { SupplierType } from '@/types';
 import {
   Button,
   Input,
@@ -28,12 +29,13 @@ import {
   SelectValue,
 } from '@/components/ui';
 
-const BUSINESS_TYPES: { value: BusinessType; label: string }[] = [
-  { value: 'restaurant', label: 'Restaurant' },
+const BUSINESS_TYPES: { value: SupplierType; label: string }[] = [
+  { value: 'distributor', label: 'Distributor' },
+  { value: 'wholesale', label: 'Wholesale' },
+  { value: 'farm', label: 'Farm' },
   { value: 'grocery', label: 'Grocery Store' },
-  { value: 'caterer', label: 'Caterer' },
-  { value: 'bakery', label: 'Bakery' },
-  { value: 'corporate', label: 'Corporate Cafeteria' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'processor', label: 'Processor' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -47,7 +49,7 @@ const US_STATES = [
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signUp, signInWithGoogle, refreshDonor } = useAuth();
+  const { signUp, signInWithGoogle, refreshSupplier } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -72,7 +74,7 @@ export default function SignupPage() {
     try {
       const user = await signUp(data.email, data.password);
 
-      await createDonor(user.uid, {
+      await createSupplier(user.uid, {
         email: data.email,
         businessName: data.businessName,
         contactName: data.contactName,
@@ -86,9 +88,9 @@ export default function SignupPage() {
         businessType: data.businessType,
       });
 
-      await refreshDonor();
+      await refreshSupplier();
       toast.success('Account created! Welcome to MobilePantry.');
-      router.push('/donor/dashboard');
+      router.push('/supplier/dashboard');
     } catch (error: unknown) {
       const firebaseError = error as { code?: string };
       toast.error(getAuthErrorMessage(firebaseError.code || ''));
@@ -111,6 +113,10 @@ export default function SignupPage() {
   };
 
   return (
+    <>
+    <Head>
+      <title>Create Supplier Account | MobilePantry</title>
+    </Head>
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center space-y-4">
@@ -124,9 +130,9 @@ export default function SignupPage() {
             />
           </div>
           <div>
-            <CardTitle className="text-2xl">Become a Donor</CardTitle>
+            <CardTitle className="text-2xl">Create a Supplier Account</CardTitle>
             <CardDescription>
-              Create an account to start rescuing food
+              Register to start submitting surplus alerts
             </CardDescription>
           </div>
         </CardHeader>
@@ -138,7 +144,7 @@ export default function SignupPage() {
                 <Label htmlFor="businessName">Business Name</Label>
                 <Input
                   id="businessName"
-                  placeholder="Your Business"
+                  placeholder="e.g., DNO Produce, Miller Farms"
                   {...register('businessName')}
                 />
                 {errors.businessName && (
@@ -271,7 +277,7 @@ export default function SignupPage() {
               <Label htmlFor="businessType">Business Type</Label>
               <Select
                 value={businessType}
-                onValueChange={(value) => setValue('businessType', value as BusinessType)}
+                onValueChange={(value) => setValue('businessType', value as SupplierType)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select business type" />
@@ -296,7 +302,7 @@ export default function SignupPage() {
                   Creating account...
                 </>
               ) : (
-                'Create Account'
+                'Create Supplier Account'
               )}
             </Button>
           </form>
@@ -358,5 +364,6 @@ export default function SignupPage() {
         </CardFooter>
       </Card>
     </div>
+    </>
   );
 }

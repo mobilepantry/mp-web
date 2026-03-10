@@ -10,9 +10,9 @@ import {
 } from 'lucide-react';
 import { useRequireAdmin } from '@/hooks/useRequireAdmin';
 import { Layout } from '@/components/layout';
-import { getAllDonors } from '@/lib/db/donors';
-import { getAllPickupRequests } from '@/lib/db/pickups';
-import type { Donor, PickupRequest } from '@/types';
+import { getAllSuppliers } from '@/lib/db/suppliers';
+import { getAllSurplusAlerts } from '@/lib/db/surplus-alerts';
+import type { Supplier, SurplusAlert } from '@/types';
 import {
   Button,
   Card,
@@ -29,60 +29,64 @@ function formatDate(timestamp: { toDate: () => Date } | Date): string {
   });
 }
 
-interface DonorWithStats extends Donor {
-  totalDonated: number;
-  lastDonationDate: Date | null;
+interface SupplierWithStats extends Supplier {
+  totalLbsRescued: number;
+  alertCount: number;
+  lastActivityDate: Date | null;
 }
 
 const PAGE_SIZE = 20;
 
-export default function AdminDonorsListPage() {
+export default function AdminSuppliersPage() {
   const router = useRouter();
   const { user, isAdmin, loading: authLoading } = useRequireAdmin();
-  const [donors, setDonors] = useState<DonorWithStats[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'recent' | 'name' | 'donated'>('recent');
+  const [sortBy, setSortBy] = useState<'recent' | 'name' | 'rescued'>('recent');
   const [page, setPage] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
       if (!user || !isAdmin) return;
       try {
-        const [donorsList, requests] = await Promise.all([
-          getAllDonors(),
-          getAllPickupRequests(),
+        const [suppliersList, alerts] = await Promise.all([
+          getAllSuppliers(),
+          getAllSurplusAlerts(),
         ]);
 
-        // Build per-donor stats from completed requests
-        const donorStats = new Map<string, { totalDonated: number; lastDate: Date | null }>();
-        for (const req of requests) {
-          if (req.status !== 'completed') continue;
-          const existing = donorStats.get(req.donorId) || { totalDonated: 0, lastDate: null };
-          existing.totalDonated += req.actualWeight ?? req.estimatedWeight;
-          const completedDate = req.completedAt
-            ? 'toDate' in req.completedAt
-              ? req.completedAt.toDate()
-              : req.completedAt
-            : null;
-          if (completedDate && (!existing.lastDate || completedDate > existing.lastDate)) {
-            existing.lastDate = completedDate;
+        // Build per-supplier stats from completed alerts
+        const supplierStats = new Map<string, { totalLbsRescued: number; alertCount: number; lastDate: Date | null }>();
+        for (const alert of alerts) {
+          const existing = supplierStats.get(alert.supplierId) || { totalLbsRescued: 0, alertCount: 0, lastDate: null };
+          existing.alertCount += 1;
+          if (alert.status === 'completed') {
+            existing.totalLbsRescued += alert.actualWeightLbs ?? alert.estimatedWeightLbs;
           }
-          donorStats.set(req.donorId, existing);
+          const createdDate = alert.createdAt
+            ? 'toDate' in alert.createdAt
+              ? alert.createdAt.toDate()
+              : alert.createdAt
+            : null;
+          if (createdDate && (!existing.lastDate || createdDate > existing.lastDate)) {
+            existing.lastDate = createdDate;
+          }
+          supplierStats.set(alert.supplierId, existing);
         }
 
-        const donorsWithStats: DonorWithStats[] = donorsList.map((d) => {
-          const stats = donorStats.get(d.id);
+        const suppliersWithStats: SupplierWithStats[] = suppliersList.map((s) => {
+          const stats = supplierStats.get(s.id);
           return {
-            ...d,
-            totalDonated: stats?.totalDonated ?? 0,
-            lastDonationDate: stats?.lastDate ?? null,
+            ...s,
+            totalLbsRescued: stats?.totalLbsRescued ?? 0,
+            alertCount: stats?.alertCount ?? 0,
+            lastActivityDate: stats?.lastDate ?? null,
           };
         });
 
-        setDonors(donorsWithStats);
+        setSuppliers(suppliersWithStats);
       } catch (err) {
-        console.error('Error fetching donors:', err);
+        console.error('Error fetching suppliers:', err);
       } finally {
         setLoading(false);
       }
@@ -92,17 +96,17 @@ export default function AdminDonorsListPage() {
     }
   }, [user, isAdmin]);
 
-  const filteredDonors = useMemo(() => {
-    let result = donors;
+  const filteredSuppliers = useMemo(() => {
+    let result = suppliers;
 
     // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (d) =>
-          d.businessName.toLowerCase().includes(q) ||
-          d.contactName.toLowerCase().includes(q) ||
-          d.email.toLowerCase().includes(q)
+        (s) =>
+          s.businessName.toLowerCase().includes(q) ||
+          s.contactName.toLowerCase().includes(q) ||
+          s.email.toLowerCase().includes(q)
       );
     }
 
@@ -111,22 +115,22 @@ export default function AdminDonorsListPage() {
       switch (sortBy) {
         case 'name':
           return a.businessName.localeCompare(b.businessName);
-        case 'donated':
-          return b.totalDonated - a.totalDonated;
+        case 'rescued':
+          return b.totalLbsRescued - a.totalLbsRescued;
         case 'recent':
         default: {
-          const dateA = a.lastDonationDate?.getTime() ?? 0;
-          const dateB = b.lastDonationDate?.getTime() ?? 0;
+          const dateA = a.lastActivityDate?.getTime() ?? 0;
+          const dateB = b.lastActivityDate?.getTime() ?? 0;
           return dateB - dateA;
         }
       }
     });
 
     return result;
-  }, [donors, searchQuery, sortBy]);
+  }, [suppliers, searchQuery, sortBy]);
 
-  const totalPages = Math.ceil(filteredDonors.length / PAGE_SIZE);
-  const paginatedDonors = filteredDonors.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(filteredSuppliers.length / PAGE_SIZE);
+  const paginatedSuppliers = filteredSuppliers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // Reset page on search/sort change
   useEffect(() => {
@@ -158,8 +162,8 @@ export default function AdminDonorsListPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Donors</h1>
-            <p className="text-sm text-gray-500">{filteredDonors.length} donors</p>
+            <h1 className="text-2xl font-bold text-gray-900">Suppliers</h1>
+            <p className="text-sm text-gray-500">{filteredSuppliers.length} suppliers</p>
           </div>
 
           {/* Search and Sort */}
@@ -179,7 +183,7 @@ export default function AdminDonorsListPage() {
                 size="sm"
                 onClick={() => setSortBy('recent')}
               >
-                Most Recent
+                Recent
               </Button>
               <Button
                 variant={sortBy === 'name' ? 'default' : 'outline'}
@@ -189,23 +193,23 @@ export default function AdminDonorsListPage() {
                 A-Z
               </Button>
               <Button
-                variant={sortBy === 'donated' ? 'default' : 'outline'}
+                variant={sortBy === 'rescued' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSortBy('donated')}
+                onClick={() => setSortBy('rescued')}
               >
-                Top Donors
+                Top Suppliers
               </Button>
             </div>
           </div>
 
-          {/* Donors List */}
+          {/* Suppliers List */}
           <Card>
             <CardContent className="p-0">
-              {paginatedDonors.length === 0 ? (
+              {paginatedSuppliers.length === 0 ? (
                 <div className="text-center py-12">
                   <Users className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500">
-                    {searchQuery ? 'No donors match your search' : 'No donors yet'}
+                    {searchQuery ? 'No suppliers match your search' : 'No suppliers yet'}
                   </p>
                 </div>
               ) : (
@@ -219,35 +223,39 @@ export default function AdminDonorsListPage() {
                           <th className="px-6 py-3 font-medium">Contact</th>
                           <th className="px-6 py-3 font-medium">Email</th>
                           <th className="px-6 py-3 font-medium">Phone</th>
-                          <th className="px-6 py-3 font-medium">Total Donated</th>
-                          <th className="px-6 py-3 font-medium">Last Donation</th>
+                          <th className="px-6 py-3 font-medium">Lbs Rescued</th>
+                          <th className="px-6 py-3 font-medium">Alerts</th>
+                          <th className="px-6 py-3 font-medium">Last Activity</th>
                           <th className="px-6 py-3 font-medium"></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedDonors.map((donor) => (
+                        {paginatedSuppliers.map((supplier) => (
                           <tr
-                            key={donor.id}
+                            key={supplier.id}
                             className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
-                            onClick={() => router.push(`/admin/donors/${donor.id}`)}
+                            onClick={() => router.push(`/admin/suppliers/${supplier.id}`)}
                           >
                             <td className="px-6 py-4 text-sm font-medium">
-                              {donor.businessName}
+                              {supplier.businessName}
                             </td>
-                            <td className="px-6 py-4 text-sm">{donor.contactName}</td>
+                            <td className="px-6 py-4 text-sm">{supplier.contactName}</td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                              {donor.email}
+                              {supplier.email}
                             </td>
-                            <td className="px-6 py-4 text-sm">{donor.phone}</td>
+                            <td className="px-6 py-4 text-sm">{supplier.phone}</td>
                             <td className="px-6 py-4 text-sm">
-                              {donor.totalDonated > 0
-                                ? `${donor.totalDonated.toLocaleString()} lbs`
-                                : '—'}
+                              {supplier.totalLbsRescued > 0
+                                ? `${supplier.totalLbsRescued.toLocaleString()} lbs`
+                                : '\u2014'}
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              {supplier.alertCount}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
-                              {donor.lastDonationDate
-                                ? formatDate(donor.lastDonationDate)
-                                : '—'}
+                              {supplier.lastActivityDate
+                                ? formatDate(supplier.lastActivityDate)
+                                : '\u2014'}
                             </td>
                             <td className="px-6 py-4">
                               <ArrowRight className="h-4 w-4 text-gray-400" />
@@ -260,26 +268,27 @@ export default function AdminDonorsListPage() {
 
                   {/* Mobile Cards */}
                   <div className="md:hidden divide-y">
-                    {paginatedDonors.map((donor) => (
+                    {paginatedSuppliers.map((supplier) => (
                       <Link
-                        key={donor.id}
-                        href={`/admin/donors/${donor.id}`}
+                        key={supplier.id}
+                        href={`/admin/suppliers/${supplier.id}`}
                         className="block"
                       >
                         <div className="p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-sm font-medium text-gray-900">
-                              {donor.businessName}
+                              {supplier.businessName}
                             </span>
                             <ArrowRight className="h-4 w-4 text-gray-400" />
                           </div>
-                          <p className="text-sm text-gray-600">{donor.contactName}</p>
+                          <p className="text-sm text-gray-600">{supplier.contactName}</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {donor.totalDonated > 0
-                              ? `${donor.totalDonated.toLocaleString()} lbs donated`
-                              : 'No donations yet'}
-                            {donor.lastDonationDate &&
-                              ` · Last: ${formatDate(donor.lastDonationDate)}`}
+                            {supplier.totalLbsRescued > 0
+                              ? `${supplier.totalLbsRescued.toLocaleString()} lbs rescued`
+                              : 'No rescues yet'}
+                            {' \u00B7 '}{supplier.alertCount} alert{supplier.alertCount !== 1 ? 's' : ''}
+                            {supplier.lastActivityDate &&
+                              ` \u00B7 Last: ${formatDate(supplier.lastActivityDate)}`}
                           </p>
                         </div>
                       </Link>

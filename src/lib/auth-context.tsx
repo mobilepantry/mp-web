@@ -12,12 +12,12 @@ import {
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { getDonor } from '@/lib/db/donors';
-import type { Donor } from '@/types';
+import { getSupplier } from '@/lib/db/suppliers';
+import type { Supplier } from '@/types';
 
 interface AuthContextType {
   user: User | null;
-  donor: Donor | null;
+  supplier: Supplier | null;
   loading: boolean;
   isAdmin: boolean;
   signUp: (email: string, password: string) => Promise<User>;
@@ -25,6 +25,10 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<User>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  refreshSupplier: () => Promise<void>;
+  /** @deprecated Use supplier */
+  donor: Supplier | null;
+  /** @deprecated Use refreshSupplier */
   refreshDonor: () => Promise<void>;
 }
 
@@ -39,14 +43,14 @@ function getAdminEmails(): string[] {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [donor, setDonor] = useState<Donor | null>(null);
+  const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const refreshDonor = async () => {
+  const refreshSupplier = async () => {
     if (user) {
-      const donorData = await getDonor(user.uid);
-      setDonor(donorData);
+      const supplierData = await getSupplier(user.uid);
+      setSupplier(supplierData);
     }
   };
 
@@ -58,11 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const adminEmails = getAdminEmails();
         setIsAdmin(adminEmails.includes(user.email?.toLowerCase() || ''));
 
-        const donorData = await getDonor(user.uid);
-        setDonor(donorData);
+        const supplierData = await getSupplier(user.uid);
+        setSupplier(supplierData);
       } else {
         setIsAdmin(false);
-        setDonor(null);
+        setSupplier(null);
       }
 
       setLoading(false);
@@ -89,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async (): Promise<void> => {
     await firebaseSignOut(auth);
     setUser(null);
-    setDonor(null);
+    setSupplier(null);
     setIsAdmin(false);
   };
 
@@ -99,7 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextType = {
     user,
-    donor,
+    supplier,
+    donor: supplier,
     loading,
     isAdmin,
     signUp,
@@ -107,7 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
     signOut,
     resetPassword,
-    refreshDonor,
+    refreshSupplier,
+    refreshDonor: refreshSupplier,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
