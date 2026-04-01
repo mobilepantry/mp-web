@@ -55,7 +55,7 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
   },
   'picked-up': {
-    label: 'Picked Up',
+    label: 'In Transit',
     color: 'bg-orange-100 text-orange-800 border-orange-200',
     icon: Truck,
   },
@@ -163,23 +163,6 @@ export default function AdminRequestDetailPage() {
     } catch (err) {
       console.error('Error confirming alert:', err);
       toast.error('Failed to confirm alert');
-    } finally {
-      setUpdating(false);
-    }
-  }
-
-  async function handlePickedUp() {
-    if (!alert) return;
-    setUpdating(true);
-    try {
-      await updateAlertStatus(alert.id, 'picked-up', {
-        pickedUpAt: Timestamp.now(),
-      });
-      setAlert({ ...alert, status: 'picked-up' });
-      toast.success('Marked as picked up');
-    } catch (err) {
-      console.error('Error marking as picked up:', err);
-      toast.error('Failed to mark as picked up');
     } finally {
       setUpdating(false);
     }
@@ -311,7 +294,7 @@ export default function AdminRequestDetailPage() {
                     ) : (
                       <CheckCircle2 className="mr-2 h-4 w-4" />
                     )}
-                    Confirm Pickup
+                    Confirm Shipment
                   </Button>
                   <Button
                     variant="destructive"
@@ -324,13 +307,9 @@ export default function AdminRequestDetailPage() {
               )}
               {alert.status === 'confirmed' && (
                 <>
-                  <Button onClick={handlePickedUp} disabled={updating}>
-                    {updating ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Truck className="mr-2 h-4 w-4" />
-                    )}
-                    Mark Picked Up
+                  <Button onClick={() => setShowCompleteModal(true)} disabled={updating}>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Mark as Received
                   </Button>
                   <Button
                     variant="destructive"
@@ -345,7 +324,7 @@ export default function AdminRequestDetailPage() {
                 <>
                   <Button onClick={() => setShowCompleteModal(true)} disabled={updating}>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Mark as Completed
+                    Mark as Received
                   </Button>
                   <Button
                     variant="destructive"
@@ -420,7 +399,7 @@ export default function AdminRequestDetailPage() {
 
               {alert.temperatureAtPickup != null && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Temperature at Pickup</p>
+                  <p className="text-sm text-gray-500 mb-1">Temperature at Receipt</p>
                   <p className={`font-medium ${getTempColor(alert.temperatureAtPickup)}`}>
                     {alert.temperatureAtPickup}{'\u00B0'}F
                   </p>
@@ -440,14 +419,14 @@ export default function AdminRequestDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Pickup Logistics */}
+          {/* Shipment Logistics */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-lg">Pickup Details</CardTitle>
+              <CardTitle className="text-lg">Shipment Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Pickup Address</p>
+                <p className="text-sm text-gray-500 mb-1">Ship From Address</p>
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
@@ -468,7 +447,7 @@ export default function AdminRequestDetailPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Pickup Date</p>
+                  <p className="text-sm text-gray-500 mb-1">Shipment Date</p>
                   <p className="text-gray-900">{formatDate(alert.pickupDate)}</p>
                 </div>
                 <div>
@@ -480,7 +459,7 @@ export default function AdminRequestDetailPage() {
               </div>
 
               <div>
-                <p className="text-sm text-gray-500 mb-1">Contact on Arrival</p>
+                <p className="text-sm text-gray-500 mb-1">Shipping Contact</p>
                 <p className="text-gray-900">{alert.contactOnArrival}</p>
               </div>
 
@@ -556,7 +535,7 @@ export default function AdminRequestDetailPage() {
                 )}
                 {(alert as any).pickedUpAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Picked Up</span>
+                    <span className="text-gray-500">In Transit</span>
                     <span className="text-gray-900">{formatDate((alert as any).pickedUpAt)}</span>
                   </div>
                 )}
@@ -576,9 +555,9 @@ export default function AdminRequestDetailPage() {
       <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Mark as Completed</DialogTitle>
+            <DialogTitle>Mark as Received</DialogTitle>
             <DialogDescription>
-              Enter the actual weight, temperature, and grade for this pickup.
+              Enter the actual weight, temperature at receipt, and grade for this shipment.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -599,7 +578,7 @@ export default function AdminRequestDetailPage() {
             </div>
 
             <div>
-              <Label htmlFor="temperatureAtPickup">Temperature at Pickup (&deg;F) *</Label>
+              <Label htmlFor="temperatureAtPickup">Temperature at Receipt (&deg;F) *</Label>
               <div className="flex items-center gap-2 mt-2">
                 <Thermometer className="h-4 w-4 text-gray-400" />
                 <Input

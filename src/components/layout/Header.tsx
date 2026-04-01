@@ -27,7 +27,7 @@ export function Header() {
     : '/';
 
   return (
-    <header className="w-full bg-white border-b-4 border-primary">
+    <header className="w-full bg-background border-b-4 border-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -47,13 +47,13 @@ export function Header() {
             {/* Nav links for logged-in users */}
             {!loading && user && !isAdmin && (
               <>
-                <Link href="/supplier/dashboard" className="text-gray-700 hover:text-primary transition-colors font-medium">
+                <Link href="/supplier/dashboard" className="text-foreground/80 hover:text-primary transition-colors font-medium">
                   Dashboard
                 </Link>
-                <Link href="/supplier/alert" className="text-gray-700 hover:text-primary transition-colors font-medium">
+                <Link href="/supplier/alert" className="text-foreground/80 hover:text-primary transition-colors font-medium">
                   Submit Alert
                 </Link>
-                <Link href="/supplier/history" className="text-gray-700 hover:text-primary transition-colors font-medium">
+                <Link href="/supplier/history" className="text-foreground/80 hover:text-primary transition-colors font-medium">
                   History
                 </Link>
               </>
@@ -61,13 +61,13 @@ export function Header() {
 
             {!loading && user && isAdmin && (
               <>
-                <Link href="/admin" className="text-gray-700 hover:text-primary transition-colors font-medium">
+                <Link href="/admin" className="text-foreground/80 hover:text-primary transition-colors font-medium">
                   Dashboard
                 </Link>
-                <Link href="/admin/requests" className="text-gray-700 hover:text-primary transition-colors font-medium">
+                <Link href="/admin/requests" className="text-foreground/80 hover:text-primary transition-colors font-medium">
                   Alerts
                 </Link>
-                <Link href="/admin/suppliers" className="text-gray-700 hover:text-primary transition-colors font-medium">
+                <Link href="/admin/suppliers" className="text-foreground/80 hover:text-primary transition-colors font-medium">
                   Suppliers
                 </Link>
               </>
@@ -121,7 +121,7 @@ export function Header() {
                       </Button>
                     </Link>
                     <Link href="/auth/signup">
-                      <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white">
+                      <Button size="sm" className="bg-foreground hover:bg-foreground/80 text-background">
                         Sign Up
                       </Button>
                     </Link>
@@ -133,7 +133,7 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 text-gray-700"
+            className="md:hidden p-2 text-foreground/80"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -147,7 +147,7 @@ export function Header() {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-100">
+          <div className="md:hidden pb-4 border-t border-border">
             <nav className="flex flex-col gap-2 pt-4">
               {/* Nav links for logged-in users */}
               {!loading && user && !isAdmin && (
@@ -228,7 +228,7 @@ export function Header() {
                     <>
                       <Link
                         href="/supplier/settings"
-                        className="text-gray-700 hover:text-primary"
+                        className="text-foreground/80 hover:text-primary"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Settings
@@ -238,7 +238,7 @@ export function Header() {
                           signOut();
                           setMobileMenuOpen(false);
                         }}
-                        className="text-left text-gray-700 hover:text-primary"
+                        className="text-left text-foreground/80 hover:text-primary"
                       >
                         Log Out
                       </button>

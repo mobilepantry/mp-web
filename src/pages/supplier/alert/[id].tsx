@@ -38,7 +38,7 @@ const STATUS_CONFIG: Record<
     label: 'Pending',
     color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     icon: Clock,
-    message: 'Your surplus alert has been received. Our team will confirm pickup shortly.',
+    message: 'Your surplus alert has been received. Our team will confirm your shipment shortly.',
   },
   confirmed: {
     label: 'Confirmed',
@@ -47,10 +47,10 @@ const STATUS_CONFIG: Record<
     message: '', // Dynamic — set below based on alert data
   },
   'picked-up': {
-    label: 'Picked Up',
+    label: 'In Transit',
     color: 'bg-orange-100 text-orange-800 border-orange-200',
     icon: Truck,
-    message: 'Produce has been picked up and is being processed at our hub.',
+    message: 'Your shipment is in transit to our cold storage.',
   },
   completed: {
     label: 'Completed',
@@ -230,11 +230,11 @@ export default function SupplierAlertDetailPage() {
   // Build dynamic status message
   let statusMessage = statusConfig.message;
   if (alert.status === 'confirmed') {
-    statusMessage = `Pickup confirmed! We'll be there on ${formatDate(alert.pickupDate)} during the ${formatTimeWindow(alert.pickupTimeWindow).toLowerCase()} window.`;
+    statusMessage = `Shipment confirmed! Please have your surplus ready on ${formatDate(alert.pickupDate)} during the ${formatTimeWindow(alert.pickupTimeWindow).toLowerCase()} window.`;
   } else if (alert.status === 'completed' && alert.actualWeightLbs) {
-    statusMessage = `Rescue complete! ${alert.actualWeightLbs} lbs of produce rescued.`;
+    statusMessage = `Receipt complete! ${alert.actualWeightLbs} lbs of produce received.`;
   } else if (alert.status === 'completed') {
-    statusMessage = 'Rescue complete! Thank you for your contribution.';
+    statusMessage = 'Receipt complete! Thank you for your contribution.';
   }
 
   return (
@@ -246,7 +246,7 @@ export default function SupplierAlertDetailPage() {
         <div className="container mx-auto px-4 max-w-2xl">
           <Link
             href="/supplier/dashboard"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-6"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Dashboard
@@ -366,7 +366,7 @@ export default function SupplierAlertDetailPage() {
                         : 'bg-gray-100 text-gray-700 border-gray-200'
                     }
                   >
-                    {alert.alertType === 'standing' ? 'Standing Weekly Pickup' : 'Ad-hoc (One-time)'}
+                    {alert.alertType === 'standing' ? 'Standing Weekly Shipment' : 'Ad-hoc (One-time)'}
                   </Badge>
                 </div>
               </div>
@@ -375,7 +375,7 @@ export default function SupplierAlertDetailPage() {
               <div className="flex gap-4">
                 <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Pickup Address</p>
+                  <p className="text-sm text-gray-500">Ship From Address</p>
                   <p className="font-medium">
                     {alert.pickupAddress.street}
                     <br />
@@ -399,7 +399,7 @@ export default function SupplierAlertDetailPage() {
               <div className="flex gap-4">
                 <Calendar className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Pickup Date & Time</p>
+                  <p className="text-sm text-gray-500">Shipment Date & Time</p>
                   <p className="font-medium">
                     {formatDate(alert.pickupDate)}
                     <br />
@@ -412,7 +412,7 @@ export default function SupplierAlertDetailPage() {
               <div className="flex gap-4">
                 <Phone className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Contact on Arrival</p>
+                  <p className="text-sm text-gray-500">Shipping Contact</p>
                   <p className="font-medium">{alert.contactOnArrival}</p>
                 </div>
               </div>

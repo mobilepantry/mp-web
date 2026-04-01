@@ -44,7 +44,7 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
   },
   'picked-up': {
-    label: 'Picked Up',
+    label: 'In Transit',
     color: 'bg-orange-100 text-orange-800 border-orange-200',
     icon: Truck,
   },
@@ -257,7 +257,7 @@ export default function SupplierDashboardPage() {
                                 {config.label}
                               </Badge>
                               <span className="text-sm text-gray-500">
-                                {formatDate(alert.pickupDate)}
+                                Ships: {formatDate(alert.pickupDate)}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700 truncate">
@@ -265,7 +265,7 @@ export default function SupplierDashboardPage() {
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
                               {alert.estimatedWeightLbs} lbs &middot;{' '}
-                              {formatTimeWindow(alert.pickupTimeWindow)}
+                              {formatTimeWindow(alert.pickupTimeWindow)} window
                             </p>
                           </div>
                           <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-4" />

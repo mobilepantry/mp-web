@@ -39,7 +39,7 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
   },
   'picked-up': {
-    label: 'Picked Up',
+    label: 'In Transit',
     color: 'bg-orange-100 text-orange-800 border-orange-200',
     icon: Truck,
   },
@@ -59,7 +59,7 @@ const STATUS_TABS: { key: AlertStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'pending', label: 'Pending' },
   { key: 'confirmed', label: 'Confirmed' },
-  { key: 'picked-up', label: 'Picked Up' },
+  { key: 'picked-up', label: 'In Transit' },
   { key: 'completed', label: 'Completed' },
   { key: 'cancelled', label: 'Cancelled' },
 ];

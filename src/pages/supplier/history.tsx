@@ -41,7 +41,7 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle2,
   },
   'picked-up': {
-    label: 'Picked Up',
+    label: 'In Transit',
     color: 'bg-orange-100 text-orange-800 border-orange-200',
     icon: Truck,
   },
@@ -131,7 +131,7 @@ export default function SupplierHistoryPage() {
     { value: 'all', label: 'All' },
     { value: 'pending', label: 'Pending' },
     { value: 'confirmed', label: 'Confirmed' },
-    { value: 'picked-up', label: 'Picked Up' },
+    { value: 'picked-up', label: 'In Transit' },
     { value: 'completed', label: 'Completed' },
     { value: 'cancelled', label: 'Cancelled' },
   ];

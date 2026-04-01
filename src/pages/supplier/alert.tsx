@@ -205,7 +205,7 @@ export default function SurplusAlertPage() {
         <div className="container mx-auto px-4 max-w-2xl">
           <Link
             href="/supplier/dashboard"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-6"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Dashboard
