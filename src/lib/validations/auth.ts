@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+const supplierTypes = [
+  'distributor',
+  'wholesale',
+  'farm',
+  'grocery',
+  'restaurant',
+  'processor',
+  'other',
+] as const;
+
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
@@ -17,7 +27,7 @@ export const signupSchema = z
     city: z.string().min(1, 'City is required'),
     state: z.string().min(2, 'State is required'),
     zip: z.string().regex(/^\d{5}$/, 'ZIP must be 5 digits'),
-    businessType: z.enum(['restaurant', 'grocery', 'caterer', 'bakery', 'corporate', 'other'], {
+    businessType: z.enum(supplierTypes, {
       message: 'Business type is required',
     }),
   })
@@ -38,7 +48,7 @@ export const completeProfileSchema = z.object({
   city: z.string().min(1, 'City is required'),
   state: z.string().min(2, 'State is required'),
   zip: z.string().regex(/^\d{5}$/, 'ZIP must be 5 digits'),
-  businessType: z.enum(['restaurant', 'grocery', 'caterer', 'bakery', 'corporate', 'other'], {
+  businessType: z.enum(supplierTypes, {
     message: 'Business type is required',
   }),
 });

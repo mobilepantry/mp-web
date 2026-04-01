@@ -1,3 +1,3 @@
-export * from './donors';
-export * from './pickups';
+export * from './suppliers';
+export * from './surplus-alerts';
 export * from './stats';

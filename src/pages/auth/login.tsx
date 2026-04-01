@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
@@ -9,7 +10,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { getAuthErrorMessage } from '@/lib/firebase-errors';
-import { getDonor } from '@/lib/db/donors';
+import { getSupplier } from '@/lib/db/suppliers';
 import {
   Button,
   Input,
@@ -35,7 +36,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const redirect = (router.query.redirect as string) || '/donor/dashboard';
+  const redirect = (router.query.redirect as string) || '/supplier/dashboard';
 
   const {
     register,
@@ -63,9 +64,9 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       const user = await signInWithGoogle();
-      // Check if user has completed their donor profile
-      const donorProfile = await getDonor(user.uid);
-      if (donorProfile) {
+      // Check if user has completed their supplier profile
+      const supplierProfile = await getSupplier(user.uid);
+      if (supplierProfile) {
         toast.success('Welcome back!');
         router.push(redirect);
       } else {
@@ -81,6 +82,10 @@ export default function LoginPage() {
   };
 
   return (
+    <>
+    <Head>
+      <title>Log In | MobilePantry</title>
+    </Head>
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
@@ -95,7 +100,7 @@ export default function LoginPage() {
           </div>
           <div>
             <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to your account</CardDescription>
+            <CardDescription>Sign in to manage your surplus alerts</CardDescription>
           </div>
         </CardHeader>
 
@@ -198,11 +203,12 @@ export default function LoginPage() {
           <p className="text-sm text-gray-600">
             Don&apos;t have an account?{' '}
             <Link href="/auth/signup" className="text-primary hover:underline font-medium">
-              Sign up
+              Register as a supplier
             </Link>
           </p>
         </CardFooter>
       </Card>
     </div>
+    </>
   );
 }

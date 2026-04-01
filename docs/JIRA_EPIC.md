@@ -1,1616 +1,586 @@
-# MobilePantry MVP — Jira Epic Breakdown
+# MobilePantry Pivot Sprint — Jira Epic Breakdown
 
-**Epic:** MobilePantry MVP Web Application  
-**Start Date:** January 15, 2026  
-**Target Launch:** March 15, 2026  
-**Duration:** 8 weeks (4 two-week sprints)
+**Epic:** MobilePantry Produce Rescue Platform Pivot
+**Start Date:** March 2, 2026
+**Target Launch:** March 15, 2026
+**Duration:** 2 weeks (1 sprint)
+
+---
+
+## Context
+
+MobilePantry is pivoting from a general food rescue donation model to a cosmetically imperfect produce rescue subscription model. The platform connects produce distributors/farms with MobilePantry's operations team, who rescue surplus produce, pack subscription boxes, and deliver to paying customers and community partners.
+
+The existing codebase (Next.js + Firebase + Vercel) has a completed Donor Portal and Admin Dashboard. This sprint repurposes those interfaces for the new model:
+
+- **Donor Portal → Supplier Portal:** Produce distributors and farms use this to alert MobilePantry of available surplus and schedule pickups.
+- **Admin Dashboard → Ops Dashboard:** MobilePantry team uses this to manage incoming surplus alerts, confirm pickups, log weights and temps, and track supplier relationships.
+- **Public Marketing Pages → Removed:** Marketing handled by Webflow (mobilepantry.org). Shopify handles e-commerce (shop.mobilepantry.org). The Next.js app lives at app.mobilepantry.org.
+
+---
+
+## Architecture
+
+```
+mobilepantry.org            → Webflow (marketing, story, blog, email capture)
+shop.mobilepantry.org       → Shopify (subscription boxes, free box promo codes)
+app.mobilepantry.org        → Next.js on Vercel (supplier portal + ops dashboard)
+```
 
 ---
 
 ## Sprint Overview
 
-| Sprint | Dates | Focus |
-|--------|-------|-------|
-| Sprint 1 | Jan 15 - Jan 29 | Foundation: Project setup, auth, database schema |
-| Sprint 2 | Jan 29 - Feb 12 | Public site + Donor registration |
-| Sprint 3 | Feb 12 - Feb 26 | Donor portal: request form, dashboard, history |
-| Sprint 4 | Feb 26 - Mar 12 | Admin dashboard + Slack integration + Polish |
-| Launch | Mar 12 - Mar 15 | Final testing, deploy, go-live |
+| Sprint       | Dates          | Focus                                                       |
+| ------------ | -------------- | ----------------------------------------------------------- |
+| Pivot Sprint | Mar 2 - Mar 12 | Rebrand, data model update, ops dashboard, subdomain config |
+| Launch       | Mar 15         | Final testing, deploy, go-live                              |
+
+| Story     | Focus                                 | Tasks        |
+| --------- | ------------------------------------- | ------------ |
+| P.1       | Data Model & Schema Updates           | 3 tasks      |
+| P.2       | Supplier Portal Rebrand               | 4 tasks      |
+| P.3       | Ops Dashboard Updates                 | 3 tasks      |
+| P.4       | App Shell, Routing & Subdomain Config | 3 tasks      |
+| P.5       | Polish & Launch Prep                  | 4 tasks      |
+| **Total** |                                       | **17 tasks** |
 
 ---
 
-# Sprint 1: Foundation (Jan 15 - Jan 29)
-
-## Story 1.1: Project Infrastructure Setup
+# Story P.1: Data Model & Schema Updates
 
 ### Story Description
-As a development team, we need to set up the foundational project infrastructure so that we have a consistent development environment and can begin building features.
+
+As a development team, we need to update the Firestore data model and TypeScript types to reflect produce-specific fields so that the platform captures the information needed for produce rescue operations (surplus categories, case counts, temperature logging, standing vs. ad-hoc pickups).
 
 ### Business Value
-- Establishes consistent development environment for all team members
-- Enables rapid feature development with proper tooling
-- Sets up deployment pipeline early to catch issues
-- Creates foundation for entire MVP build
+
+- Captures produce-specific data required by the Operations Playbook (grading, temp, categories)
+- Enables accurate tracking of pounds rescued, supplier relationships, and cold chain compliance
+- Foundation for all other pivot sprint work — UI and dashboard changes depend on this
 
 ### Acceptance Criteria
-- [ ] Next.js project initialized with Pages Router
-- [ ] Tailwind CSS configured and working
-- [ ] shadcn/ui installed with base components
-- [ ] Firebase project created with Firestore and Auth enabled
-- [ ] Project deployed to Vercel with preview deploys working
-- [ ] Repository structure documented in README
-- [ ] All team members can run project locally
+
+- [ ] TypeScript types updated: `Donor` → `Supplier`, `PickupRequest` → `SurplusAlert`
+- [ ] New fields added: produce category, estimated case count, temperature at pickup, alert type (ad-hoc vs. standing), produce grade
+- [ ] Zod validation schemas updated to match new types
+- [ ] Database helper functions updated with new field names and queries
+- [ ] Firestore security rules updated for renamed collections (or aliased)
+- [ ] Existing test data (if any) migrated or cleared
 
 ---
 
-### Task 1.1.1: Initialize Next.js Project with Tailwind
+### Task P.1.1: Update TypeScript Types and Interfaces
 
-**Reason**  
-Need a properly configured Next.js project as the foundation for all development work.
+**Reason**
+The existing `Donor` and `PickupRequest` types don't capture produce-specific information required by the Operations Playbook.
 
-**Goal**  
-Create Next.js project with Pages Router, Tailwind CSS, and proper folder structure.
-
-**Technical Requirements**
-- Run `npx create-next-app@latest mobilepantry` with options:
-  - TypeScript: Yes
-  - ESLint: Yes
-  - Tailwind CSS: Yes
-  - `src/` directory: Yes
-  - App Router: No (use Pages Router)
-  - Import alias: @/*
-- Create folder structure:
-  ```
-  src/
-  ├── components/
-  │   ├── ui/           # shadcn components
-  │   ├── layout/       # Header, Footer, Layout
-  │   └── common/       # Shared components
-  ├── pages/
-  │   ├── api/          # API routes
-  │   ├── auth/         # Login, signup, forgot-password
-  │   ├── donor/        # Donor portal pages
-  │   └── admin/        # Admin dashboard pages
-  ├── lib/              # Utilities, Firebase config
-  ├── hooks/            # Custom React hooks
-  ├── styles/           # Global styles
-  └── types/            # TypeScript types
-  ```
-- Configure `tailwind.config.js` with custom colors:
-  - Primary blue: #23AAE1
-  - Secondary colors TBD
-- Create `.env.local.example` with required environment variables
-- Update `README.md` with setup instructions
-
----
-
-### Task 1.1.2: Set Up shadcn/ui Component Library
-
-**Reason**  
-Need accessible, well-designed UI components to build interfaces quickly.
-
-**Goal**  
-Install and configure shadcn/ui with commonly needed components.
+**Goal**
+Redefine TypeScript types to reflect the produce rescue model.
 
 **Technical Requirements**
-- Run `npx shadcn-ui@latest init`
-- Configure for:
-  - Style: Default
-  - Base color: Slate
-  - CSS variables: Yes
-- Install initial components:
-  ```bash
-  npx shadcn-ui@latest add button
-  npx shadcn-ui@latest add input
-  npx shadcn-ui@latest add label
-  npx shadcn-ui@latest add card
-  npx shadcn-ui@latest add form
-  npx shadcn-ui@latest add select
-  npx shadcn-ui@latest add textarea
-  npx shadcn-ui@latest add table
-  npx shadcn-ui@latest add badge
-  npx shadcn-ui@latest add alert
-  npx shadcn-ui@latest add dialog
-  npx shadcn-ui@latest add dropdown-menu
-  npx shadcn-ui@latest add toast
-  ```
-- Create `components/ui/index.ts` for clean exports
-- Verify components render correctly with Tailwind
 
----
+- Update `types/index.ts` (or create `types/supplier.ts` and `types/surplus.ts`):
 
-### Task 1.1.3: Configure Firebase Project
-
-**Reason**  
-Need Firebase for authentication and database before building any user-facing features.
-
-**Goal**  
-Create Firebase project with Firestore and Authentication configured.
-
-**Technical Requirements**
-- Create new Firebase project: "mobilepantry-prod"
-- Enable services:
-  - Firestore Database (start in test mode, will secure later)
-  - Authentication with providers:
-    - Email/Password
-    - Google OAuth
-- Create web app in Firebase console
-- Install Firebase SDK: `npm install firebase`
-- Create `lib/firebase.ts`:
   ```typescript
-  import { initializeApp, getApps } from 'firebase/app';
-  import { getAuth } from 'firebase/auth';
-  import { getFirestore } from 'firebase/firestore';
-
-  const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  };
-
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  export const auth = getAuth(app);
-  export const db = getFirestore(app);
-  ```
-- Add Firebase config values to `.env.local`
-- Update `.env.local.example` with variable names (no values)
-- Test connection by reading/writing test document
-
----
-
-### Task 1.1.4: Deploy to Vercel
-
-**Reason**  
-Need production deployment pipeline working early to catch deployment issues and enable preview URLs for testing.
-
-**Goal**  
-Connect repository to Vercel with automatic preview deploys on PRs.
-
-**Technical Requirements**
-- Create Vercel account (if needed)
-- Import GitHub repository to Vercel
-- Configure environment variables in Vercel dashboard:
-  - All `NEXT_PUBLIC_FIREBASE_*` variables
-  - `SLACK_WEBHOOK_URL` (can be placeholder for now)
-  - `ADMIN_EMAILS` (comma-separated list)
-- Verify:
-  - Main branch deploys to production URL
-  - Pull requests get preview URLs
-  - Environment variables are accessible
-- Add Vercel deployment badge to README
-- Document deployment process in README
-
----
-
-## Story 1.2: Authentication System
-
-### Story Description
-As a development team, we need to implement user authentication so that donors can create accounts and securely access their dashboard.
-
-### Business Value
-- Enables personalized donor experience
-- Secures donor data and pickup history
-- Establishes identity for all platform interactions
-- Allows admin access control
-
-### Acceptance Criteria
-- [ ] Donors can sign up with email/password
-- [ ] Donors can sign up with Google OAuth
-- [ ] Donors can log in with existing credentials
-- [ ] Donors can reset forgotten passwords
-- [ ] Auth state persists across page refreshes
-- [ ] Protected routes redirect unauthenticated users to login
-- [ ] Admin emails can access admin routes
-
----
-
-### Task 1.2.1: Create Auth Context and Hooks
-
-**Reason**  
-Need centralized auth state management accessible throughout the application.
-
-**Goal**  
-Implement React context for Firebase auth with custom hooks.
-
-**Technical Requirements**
-- Create `lib/auth-context.tsx`:
-  ```typescript
-  // Context providing:
-  // - user: Firebase User | null
-  // - loading: boolean
-  // - isAdmin: boolean
-  // - signUp: (email, password) => Promise
-  // - signIn: (email, password) => Promise
-  // - signInWithGoogle: () => Promise
-  // - signOut: () => Promise
-  // - resetPassword: (email) => Promise
-  ```
-- Create `hooks/useAuth.ts` for easy context access
-- Create `hooks/useRequireAuth.ts` for protected routes:
-  - Redirects to `/auth/login` if not authenticated
-  - Returns user object if authenticated
-- Create `hooks/useRequireAdmin.ts` for admin routes:
-  - Checks if user email is in `ADMIN_EMAILS` env var
-  - Redirects to `/donor/dashboard` if not admin
-- Wrap `_app.tsx` with AuthProvider
-- Handle auth state persistence with `onAuthStateChanged`
-
----
-
-### Task 1.2.2: Build Login Page
-
-**Reason**  
-Donors need a way to access their existing accounts.
-
-**Goal**  
-Create login page with email/password and Google OAuth options.
-
-**Technical Requirements**
-- Create `pages/auth/login.tsx`
-- UI Requirements:
-  - MobilePantry logo at top
-  - Email input field
-  - Password input field
-  - "Forgot password?" link
-  - "Log in" button
-  - Divider with "or"
-  - "Continue with Google" button
-  - "Don't have an account? Sign up" link
-- Form validation:
-  - Email format validation
-  - Password required
-  - Display error messages from Firebase
-- On successful login:
-  - Redirect to `/donor/dashboard`
-  - If admin email, offer choice of donor or admin dashboard
-- Mobile responsive design
-- Loading states on buttons during auth
-
----
-
-### Task 1.2.3: Build Signup Page
-
-**Reason**  
-New donors need to create accounts to request pickups.
-
-**Goal**  
-Create signup page that collects donor information and creates account.
-
-**Technical Requirements**
-- Create `pages/auth/signup.tsx`
-- UI Requirements:
-  - MobilePantry logo at top
-  - Business name input
-  - Contact name input
-  - Email input
-  - Phone input
-  - Password input
-  - Confirm password input
-  - Business address fields:
-    - Street address
-    - City
-    - State (dropdown, default Ohio)
-    - ZIP code
-  - Business type dropdown:
-    - Restaurant
-    - Grocery Store
-    - Caterer
-    - Bakery
-    - Corporate Cafeteria
-    - Other
-  - "Create Account" button
-  - "Continue with Google" button
-  - "Already have an account? Log in" link
-- Form validation:
-  - All required fields filled
-  - Email format valid
-  - Phone format valid (10 digits)
-  - Password minimum 8 characters
-  - Passwords match
-  - ZIP code format valid
-- On successful signup:
-  - Create Firebase Auth user
-  - Create donor document in Firestore (see Task 1.3.1)
-  - Redirect to `/donor/dashboard`
-- For Google OAuth signup:
-  - After Google auth, redirect to profile completion form if donor document doesn't exist
-
----
-
-### Task 1.2.4: Build Forgot Password Page
-
-**Reason**  
-Donors need ability to recover account access if they forget their password.
-
-**Goal**  
-Create password reset flow using Firebase Auth.
-
-**Technical Requirements**
-- Create `pages/auth/forgot-password.tsx`
-- UI Requirements:
-  - MobilePantry logo
-  - Explanatory text
-  - Email input
-  - "Send Reset Link" button
-  - "Back to login" link
-- On submit:
-  - Call Firebase `sendPasswordResetEmail`
-  - Show success message: "Check your email for reset link"
-  - Handle errors (user not found, etc.)
-- Mobile responsive
-
----
-
-## Story 1.3: Database Schema Implementation
-
-### Story Description
-As a development team, we need to implement the Firestore database schema so that we have a structured way to store and retrieve donor and pickup request data.
-
-### Business Value
-- Establishes data structure for all application features
-- Enables consistent data access patterns
-- Supports future reporting and analytics needs
-- Provides foundation for donor history and impact tracking
-
-### Acceptance Criteria
-- [ ] Donors collection created with defined schema
-- [ ] Pickup requests collection created with defined schema
-- [ ] TypeScript types match Firestore schema
-- [ ] Helper functions exist for common database operations
-- [ ] Firestore security rules protect data appropriately
-
----
-
-### Task 1.3.1: Define TypeScript Types and Firestore Schema
-
-**Reason**  
-Need strongly-typed data structures to prevent bugs and enable autocomplete.
-
-**Goal**  
-Create TypeScript types that match our data model.
-
-**Technical Requirements**
-- Create `types/index.ts`:
-  ```typescript
-  export interface Address {
-    street: string;
-    city: string;
-    state: string;
-    zip: string;
-  }
-
-  export interface Donor {
+  // Rename Donor → Supplier
+  export interface Supplier {
     id: string;
-    email: string;
     businessName: string;
     contactName: string;
+    email: string;
     phone: string;
-    address: Address;
-    businessType: 'restaurant' | 'grocery' | 'caterer' | 'bakery' | 'corporate' | 'other';
+    businessAddress: Address;
+    businessType: SupplierType;
     createdAt: Timestamp;
     updatedAt: Timestamp;
+    userId: string;
   }
 
-  export type PickupStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  export type TimeWindow = 'morning' | 'afternoon' | 'evening';
+  export type SupplierType =
+    | "distributor"
+    | "wholesale"
+    | "farm"
+    | "grocery"
+    | "restaurant"
+    | "processor"
+    | "other";
 
-  export interface PickupRequest {
+  // Rename PickupRequest → SurplusAlert
+  export interface SurplusAlert {
     id: string;
-    donorId: string;
-    status: PickupStatus;
-    foodDescription: string;
-    estimatedWeight: number;
+    supplierId: string;
+    status: AlertStatus;
+    produceDescription: string;
+    produceCategory: ProduceCategory[];
+    estimatedWeightLbs: number;
+    estimatedCaseCount?: number;
+    produceGrade?: ProduceGrade;
     pickupAddress: Address;
-    pickupDate: Timestamp;
+    pickupDate: string;
     pickupTimeWindow: TimeWindow;
+    alertType: AlertType;
     contactOnArrival: string;
     specialInstructions?: string;
-    actualWeight?: number;
-    confirmedAt?: Timestamp;
-    completedAt?: Timestamp;
+    actualWeightLbs?: number;
+    temperatureAtPickup?: number;
+    actualGrade?: ProduceGrade;
     createdAt: Timestamp;
     updatedAt: Timestamp;
   }
 
-  // For creating new records (omit auto-generated fields)
-  export type CreateDonorInput = Omit<Donor, 'id' | 'createdAt' | 'updatedAt'>;
-  export type CreatePickupInput = Omit<PickupRequest, 'id' | 'status' | 'confirmedAt' | 'completedAt' | 'createdAt' | 'updatedAt'>;
+  export type AlertStatus =
+    | "pending"
+    | "confirmed"
+    | "picked-up"
+    | "completed"
+    | "cancelled";
+
+  export type ProduceCategory =
+    | "fruits"
+    | "vegetables"
+    | "leafy-greens"
+    | "root-vegetables"
+    | "herbs"
+    | "mixed"
+    | "other";
+
+  export type ProduceGrade = "A" | "B" | "C";
+  export type AlertType = "ad-hoc" | "standing";
+  export type TimeWindow = "morning" | "afternoon" | "evening";
   ```
+
+- Add a `'picked-up'` status between `'confirmed'` and `'completed'` to reflect the actual operations flow
+- Keep the `Address` type as-is
 
 ---
 
-### Task 1.3.2: Create Database Helper Functions
+### Task P.1.2: Update Zod Validation Schemas
 
-**Reason**  
-Need reusable functions for common database operations to keep code DRY.
+**Reason**
+Form validation must match the new data model to ensure data quality.
 
-**Goal**  
-Create helper functions for CRUD operations on donors and pickup requests.
+**Goal**
+Update Zod schemas for supplier registration and surplus alert submission.
 
 **Technical Requirements**
-- Create `lib/db/donors.ts`:
+
+- Update or create validation schemas in `lib/validations.ts`:
+
   ```typescript
-  // Functions:
-  // - createDonor(userId: string, data: CreateDonorInput): Promise<Donor>
-  // - getDonor(donorId: string): Promise<Donor | null>
-  // - getDonorByEmail(email: string): Promise<Donor | null>
-  // - updateDonor(donorId: string, data: Partial<Donor>): Promise<void>
-  // - getAllDonors(): Promise<Donor[]>
-  ```
-- Create `lib/db/pickups.ts`:
-  ```typescript
-  // Functions:
-  // - createPickupRequest(data: CreatePickupInput): Promise<PickupRequest>
-  // - getPickupRequest(requestId: string): Promise<PickupRequest | null>
-  // - getPickupRequestsByDonor(donorId: string): Promise<PickupRequest[]>
-  // - getAllPickupRequests(status?: PickupStatus): Promise<PickupRequest[]>
-  // - updatePickupRequest(requestId: string, data: Partial<PickupRequest>): Promise<void>
-  // - getPendingPickupRequests(): Promise<PickupRequest[]>
-  ```
-- Create `lib/db/stats.ts`:
-  ```typescript
-  // Functions:
-  // - getTotalPoundsRescued(): Promise<number>
-  // - getTotalRescues(): Promise<number>
-  // - getActiveDonorsCount(): Promise<number>
-  // - getDonorStats(donorId: string): Promise<{ totalPounds: number, totalRescues: number }>
-  ```
-- Use Firestore Timestamp for all date fields
-- Handle errors appropriately with try/catch
-- Add JSDoc comments for all functions
-
----
-
-### Task 1.3.3: Configure Firestore Security Rules
-
-**Reason**  
-Need to secure database so users can only access appropriate data.
-
-**Goal**  
-Write Firestore security rules that protect donor and pickup data.
-
-**Technical Requirements**
-- Create `firestore.rules`:
-  ```
-  rules_version = '2';
-  service cloud.firestore {
-    match /databases/{database}/documents {
-      // Helper functions
-      function isAuthenticated() {
-        return request.auth != null;
-      }
-      
-      function isOwner(donorId) {
-        return isAuthenticated() && request.auth.uid == donorId;
-      }
-      
-      function isAdmin() {
-        return isAuthenticated() && 
-          request.auth.token.email in ['admin1@mobilepantry.org', 'admin2@mobilepantry.org'];
-      }
-      
-      // Donors collection
-      match /donors/{donorId} {
-        allow read: if isOwner(donorId) || isAdmin();
-        allow create: if isAuthenticated() && request.auth.uid == donorId;
-        allow update: if isOwner(donorId) || isAdmin();
-        allow delete: if isAdmin();
-      }
-      
-      // Pickup requests collection
-      match /pickupRequests/{requestId} {
-        allow read: if isAuthenticated() && 
-          (resource.data.donorId == request.auth.uid || isAdmin());
-        allow create: if isAuthenticated();
-        allow update: if isAdmin() || 
-          (resource.data.donorId == request.auth.uid && 
-           resource.data.status == 'pending');
-        allow delete: if isAdmin();
-      }
-    }
-  }
-  ```
-- Deploy rules: `firebase deploy --only firestore:rules`
-- Test rules with Firebase emulator
-- Document any admin email updates needed in rules
-
----
-
-# Sprint 2: Public Site + Donor Registration (Jan 29 - Feb 12)
-
-## Story 2.1: Public Marketing Website
-
-### Story Description
-As a development team, we need to build the public-facing marketing pages so that visitors can learn about MobilePantry and be encouraged to become donors.
-
-### Business Value
-- Creates first impression for potential donors
-- Communicates mission and impact clearly
-- Provides SEO foundation for organic discovery
-- Establishes credibility and trust
-
-### Acceptance Criteria
-- [ ] Homepage displays mission, impact stats, and clear CTAs
-- [ ] About page tells MobilePantry's story
-- [ ] Contact page provides ways to reach the team
-- [ ] All pages are mobile responsive
-- [ ] Navigation is consistent across pages
-- [ ] Impact stats pull from database (or show placeholder if no data)
-
----
-
-### Task 2.1.1: Create Shared Layout Component
-
-**Reason**  
-Need consistent header, footer, and navigation across all pages.
-
-**Goal**  
-Build layout component with responsive navigation.
-
-**Technical Requirements**
-- Create `components/layout/Header.tsx`:
-  - MobilePantry logo (link to home)
-  - Navigation links: Home, About, Contact
-  - "Become a Donor" button (links to signup)
-  - "Login" link (if not authenticated)
-  - User dropdown (if authenticated):
-    - Donor Dashboard
-    - Admin Dashboard (if admin)
-    - Logout
-  - Mobile hamburger menu
-- Create `components/layout/Footer.tsx`:
-  - MobilePantry logo
-  - Contact info (email, phone)
-  - Social links (placeholders for now)
-  - Copyright notice
-  - Links: About, Contact, Privacy Policy
-- Create `components/layout/Layout.tsx`:
-  - Wraps children with Header and Footer
-  - Optional `hideNav` prop for auth pages
-- Apply Layout in `_app.tsx` or per-page
-
----
-
-### Task 2.1.2: Build Homepage
-
-**Reason**  
-Homepage is the primary entry point and must communicate value proposition quickly.
-
-**Goal**  
-Create compelling homepage with mission, impact, and clear calls-to-action.
-
-**Technical Requirements**
-- Create `pages/index.tsx`
-- Sections:
-  1. **Hero Section**
-     - Headline: "Rescuing Food, Feeding Columbus"
-     - Subheadline: Brief mission statement
-     - CTA buttons: "Donate Food" (→ signup) and "Learn More" (→ about)
-     - Background image or gradient
-  2. **Impact Stats** (3-4 cards)
-     - Total pounds rescued
-     - Meals provided (pounds / 1.2)
-     - Active donors
-     - (Optional) CO2 prevented
-     - Pull from database or show "Coming soon" if no data
-  3. **How It Works** (3 steps)
-     - Step 1: Sign up as a donor
-     - Step 2: Request a pickup when you have surplus
-     - Step 3: We pick it up and deliver to those in need
-  4. **Call to Action**
-     - "Ready to reduce waste and fight hunger?"
-     - "Become a Donor" button
-  5. **Contact teaser**
-     - "Questions? Get in touch"
-     - Link to contact page
-- Mobile responsive (stack sections on mobile)
-- Use Next.js `getStaticProps` for impact stats (revalidate every hour)
-
----
-
-### Task 2.1.3: Build About Page
-
-**Reason**  
-Donors want to understand who they're partnering with and why the mission matters.
-
-**Goal**  
-Create about page that tells MobilePantry's story and mission.
-
-**Technical Requirements**
-- Create `pages/about.tsx`
-- Sections:
-  1. **Mission Statement**
-     - Clear articulation of what MobilePantry does
-     - The problem: food waste + food insecurity in Columbus
-  2. **How We Work**
-     - Dual-channel model explanation
-     - Supplier → Pantry delivery
-     - Weekend popup distributions (future)
-  3. **Our Story** (placeholder for now)
-     - Founded by OSU students
-     - Partnership goals
-  4. **The Team** (optional for MVP)
-     - Photos and bios (can be placeholder)
-  5. **Partners** (placeholder)
-     - "Coming soon" or logos of target partners
-- Mobile responsive
-- SEO meta tags
-
----
-
-### Task 2.1.4: Build Contact Page
-
-**Reason**  
-Visitors need a way to reach MobilePantry with questions or partnership inquiries.
-
-**Goal**  
-Create contact page with form and direct contact info.
-
-**Technical Requirements**
-- Create `pages/contact.tsx`
-- Contact form fields:
-  - Name (required)
-  - Email (required)
-  - Subject dropdown:
-    - General Inquiry
-    - Become a Donor
-    - Partnership Opportunity
-    - Volunteer Interest
-    - Other
-  - Message (required, textarea)
-  - Submit button
-- On submit:
-  - Send notification to team (can use same Slack webhook)
-  - Show success message
-  - Clear form
-- Also display:
-  - Email address
-  - Phone number (if available)
-  - Location: "Serving Columbus, Ohio"
-- Mobile responsive
-
----
-
-## Story 2.2: Donor Onboarding Polish
-
-### Story Description
-As a development team, we need to polish the donor signup flow and ensure smooth onboarding so that new donors have a great first experience.
-
-### Business Value
-- Reduces friction in donor acquisition
-- Creates positive first impression
-- Ensures donor data is complete for operations
-- Sets up donors for successful first pickup request
-
-### Acceptance Criteria
-- [ ] Signup flow is smooth and intuitive
-- [ ] Google OAuth users complete profile on first login
-- [ ] Form validation provides helpful error messages
-- [ ] Success states guide users to next steps
-- [ ] Email verification sent (optional for MVP)
-
----
-
-### Task 2.2.1: Build Google OAuth Profile Completion
-
-**Reason**  
-Google OAuth only provides email and name; we need business details for operations.
-
-**Goal**  
-Create profile completion flow for Google OAuth signups.
-
-**Technical Requirements**
-- Create `pages/auth/complete-profile.tsx`
-- Trigger when:
-  - User signs in with Google
-  - No donor document exists for their UID
-- Form fields (pre-fill email from Google):
-  - Business name (required)
-  - Contact name (pre-fill from Google displayName)
-  - Phone (required)
-  - Business address (required)
-  - Business type (required)
-- On submit:
-  - Create donor document in Firestore
-  - Redirect to `/donor/dashboard`
-- If donor document exists, skip this page
-- Add check in `useRequireAuth` hook
-
----
-
-### Task 2.2.2: Implement Form Validation with React Hook Form
-
-**Reason**  
-Need consistent, user-friendly form validation across all forms.
-
-**Goal**  
-Set up React Hook Form with Zod validation for all auth forms.
-
-**Technical Requirements**
-- Install dependencies: `npm install react-hook-form @hookform/resolvers zod`
-- Create validation schemas in `lib/validations/`:
-  ```typescript
-  // auth.ts
-  export const loginSchema = z.object({
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(1, 'Password is required'),
+  export const supplierSchema = z.object({
+    businessName: z.string().min(1, "Business name is required"),
+    contactName: z.string().min(1, "Contact name is required"),
+    email: z.string().email("Invalid email"),
+    phone: z.string().regex(/^\d{10}$/, "Phone must be 10 digits"),
+    businessType: z.enum([
+      "distributor", "wholesale", "farm", "grocery",
+      "restaurant", "processor", "other",
+    ]),
   });
 
-  export const signupSchema = z.object({
-    businessName: z.string().min(1, 'Business name is required'),
-    contactName: z.string().min(1, 'Contact name is required'),
-    email: z.string().email('Invalid email address'),
-    phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string(),
-    street: z.string().min(1, 'Street address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(2, 'State is required'),
-    zip: z.string().regex(/^\d{5}$/, 'ZIP must be 5 digits'),
-    businessType: z.enum(['restaurant', 'grocery', 'caterer', 'bakery', 'corporate', 'other']),
-  }).refine(data => data.password === data.confirmPassword, {
-    message: 'Passwords must match',
-    path: ['confirmPassword'],
+  export const surplusAlertSchema = z.object({
+    produceDescription: z.string().min(1, "Describe the available produce"),
+    produceCategory: z.array(z.enum([
+      "fruits", "vegetables", "leafy-greens", "root-vegetables",
+      "herbs", "mixed", "other",
+    ])).min(1, "Select at least one category"),
+    estimatedWeightLbs: z.number().min(1, "Weight must be at least 1 lb"),
+    estimatedCaseCount: z.number().min(1).optional(),
+    produceGrade: z.enum(["A", "B", "C"]).optional(),
+    alertType: z.enum(["ad-hoc", "standing"]),
+    pickupDate: z.string().min(1, "Pickup date is required"),
+    pickupTimeWindow: z.enum(["morning", "afternoon", "evening"]),
+    contactOnArrival: z.string().min(1, "Contact method is required"),
+    specialInstructions: z.string().optional(),
   });
   ```
-- Refactor login and signup pages to use React Hook Form
-- Display inline error messages below fields
-- Disable submit button while form is invalid or submitting
+
+- Ensure error messages are supplier-friendly, not developer-facing
 
 ---
 
-### Task 2.2.3: Add Loading States and Success Messages
+### Task P.1.3: Update Database Helper Functions and Security Rules
 
-**Reason**  
-Users need feedback during async operations to know the system is working.
+**Reason**
+Database helpers and Firestore rules reference the old `donors` and `pickupRequests` collection names and field structures.
 
-**Goal**  
-Add loading spinners and success/error toasts throughout auth flows.
+**Goal**
+Update all Firestore interaction code for the new data model.
 
 **Technical Requirements**
-- Create `components/ui/Spinner.tsx` (or use shadcn)
-- Implement loading states:
-  - Login button shows spinner while authenticating
-  - Signup button shows spinner while creating account
-  - Google OAuth button shows spinner
-  - Forgot password button shows spinner
-- Use shadcn `toast` for notifications:
-  - Success: "Account created! Redirecting..."
-  - Success: "Password reset email sent"
-  - Error: Display Firebase error messages in user-friendly format
-- Create `lib/firebase-errors.ts` to map Firebase error codes to friendly messages:
+
+- **Keep existing Firestore collection names** (`donors`, `pickupRequests`) to avoid data migration complexity. Map them in code:
+
   ```typescript
-  export function getAuthErrorMessage(code: string): string {
-    switch (code) {
-      case 'auth/user-not-found':
-        return 'No account found with this email';
-      case 'auth/wrong-password':
-        return 'Incorrect password';
-      case 'auth/email-already-in-use':
-        return 'An account already exists with this email';
-      // ... etc
-    }
-  }
+  // lib/db/suppliers.ts (rename from donors.ts)
+  const SUPPLIERS_COLLECTION = 'donors';
+
+  export async function getSupplier(userId: string): Promise<Supplier | null> { ... }
+  export async function createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> { ... }
+  export async function updateSupplier(id: string, data: Partial<Supplier>): Promise<void> { ... }
   ```
 
+- Update `lib/db/pickups.ts` → rename to `lib/db/surplus-alerts.ts`:
+
+  ```typescript
+  const ALERTS_COLLECTION = 'pickupRequests';
+
+  export async function createSurplusAlert(data: ...): Promise<string> { ... }
+  export async function getSurplusAlert(id: string): Promise<SurplusAlert | null> { ... }
+  export async function updateAlertStatus(id: string, status: AlertStatus, extraFields?: Partial<SurplusAlert>): Promise<void> { ... }
+  export async function getAlertsBySupplier(supplierId: string): Promise<SurplusAlert[]> { ... }
+  export async function getPendingAlerts(): Promise<SurplusAlert[]> { ... }
+  ```
+
+- Update `lib/db/stats.ts` to compute new metrics:
+  - Total pounds rescued (sum of `actualWeightLbs`)
+  - Total surplus alerts by status
+  - Active suppliers count
+  - Avg temperature at pickup (for cold chain compliance tracking)
+- Firestore security rules: No changes needed if collection names stay the same
+
 ---
 
-# Sprint 3: Donor Portal (Feb 12 - Feb 26)
-
-## Story 3.1: Pickup Request Form
+# Story P.2: Supplier Portal Rebrand
 
 ### Story Description
-As a donor, I need to submit pickup requests easily so that MobilePantry can rescue my surplus food with minimal friction.
+
+As a produce supplier, I need a portal where I can create an account, alert MobilePantry of available surplus produce, and track the status of my alerts, so that my surplus gets rescued instead of wasted.
 
 ### Business Value
-- Core feature enabling food rescue operations
-- Frictionless experience encourages repeat donations
-- Captures all information needed for successful pickups
-- Triggers team notification for quick response
+
+- Core interface for supplier engagement — without this, no produce gets rescued
+- Frictionless experience encourages suppliers to use the platform instead of just texting/calling
+- Structured data capture replaces ad-hoc text messages and shared Google Sheets
+- Gives suppliers visibility into the status of their surplus alerts
 
 ### Acceptance Criteria
-- [ ] Form is completable in under 2 minutes
-- [ ] Address pre-fills from donor profile
-- [ ] Date defaults to today
-- [ ] Form validates all required fields
-- [ ] Submission creates Firestore document with status "pending"
-- [ ] Slack notification sent on submission
-- [ ] Donor sees confirmation and can view request status
+
+- [ ] Signup page collects supplier-specific info (business type includes distributor, wholesale, farm, etc.)
+- [ ] Surplus alert form captures: produce description, category (multi-select), weight, case count, grade, pickup logistics, alert type (ad-hoc vs standing)
+- [ ] Supplier dashboard shows pending alerts, impact stats (lbs rescued, alerts submitted), and recent activity
+- [ ] Alert history page with status filter tabs
+- [ ] Settings page updated with supplier-specific fields
+- [ ] All UI text updated from donor/donation language to supplier/surplus language
 
 ---
 
-### Task 3.1.1: Build Pickup Request Form UI
+### Task P.2.1: Update Auth Pages for Supplier Terminology
 
-**Reason**  
-This is the core donor interaction and must be as frictionless as possible.
+**Reason**
+Signup, login, and profile completion pages reference "donor" and "donation" language that no longer applies.
 
-**Goal**  
-Create the pickup request form with excellent UX.
+**Goal**
+Rebrand all auth pages for supplier context.
 
 **Technical Requirements**
-- Create `pages/donor/request.tsx`
-- Form fields:
-  1. **What food do you have?** (textarea)
-     - Placeholder: "e.g., 50 lbs prepared sandwiches, 20 lbs mixed salads"
-     - Required
-  2. **Estimated amount** (number input)
-     - Label: "Estimated weight (lbs)"
-     - Placeholder: "50"
-     - Required, min 1
-  3. **Pickup address** (address fields)
-     - Pre-fill from donor profile
-     - "Use my business address" checkbox (checked by default)
-     - If unchecked, show editable fields
-     - Required
-  4. **Pickup date** (date picker)
-     - Default to today
-     - Min date: today
-     - Required
-  5. **Pickup time window** (select)
-     - Options: Morning (8am-12pm), Afternoon (12pm-5pm), Evening (5pm-8pm)
-     - Required
-  6. **Best way to contact on arrival** (text input)
-     - Placeholder: "Call 614-555-1234 or ask for Joe at front desk"
-     - Required
-  7. **Special instructions** (textarea)
-     - Placeholder: "e.g., Use loading dock, ring buzzer #3"
-     - Optional
-- Submit button: "Request Pickup"
-- Form validation using React Hook Form + Zod
+
+- Update `pages/auth/signup.tsx`:
+  - Page title: "Create a Supplier Account"
+  - Business type dropdown: Distributor, Wholesale, Farm, Grocery Store, Restaurant, Processor, Other
+  - Placeholder text updates (e.g., "e.g., DNO Produce, Miller Farms")
+  - CTA: "Create Supplier Account"
+- Update `pages/auth/login.tsx`:
+  - Subtitle: "Sign in to manage your surplus alerts"
+  - "Don't have an account? Register as a supplier" link text
+- Update `pages/auth/complete-profile.tsx`:
+  - Same business type changes as signup
+  - Helper text: "Complete your supplier profile to start submitting surplus alerts"
+- Update meta titles and descriptions on all auth pages
+
+---
+
+### Task P.2.2: Rebuild Surplus Alert Form (was Pickup Request Form)
+
+**Reason**
+The pickup request form needs produce-specific fields to capture structured data about available surplus.
+
+**Goal**
+Create a surplus alert form that captures all information needed for produce rescue operations.
+
+**Technical Requirements**
+
+- Update `pages/donor/request.tsx` → rename route to `pages/supplier/alert.tsx`
+- Form fields (using React Hook Form + Zod with `surplusAlertSchema`):
+  1. **What produce is available?** (textarea) — Required
+  2. **Produce category** (multi-select checkboxes) — Required (at least one)
+  3. **Estimated weight (lbs)** (number input) — Required, min 1
+  4. **Estimated case count** (number input) — Optional
+  5. **Produce grade** (select, optional) — A/B/C/Not sure
+  6. **Alert type** (radio buttons) — Ad-hoc (default) or Standing weekly
+  7. **Pickup address** (address fields) — Pre-fill from supplier profile
+  8. **Pickup date** (date picker) — Default to today, min today
+  9. **Pickup time window** (select) — Morning/Afternoon/Evening
+  10. **Contact on arrival** (text input) — Required
+  11. **Special instructions** (textarea) — Optional
+- Submit button: "Submit Surplus Alert"
+- On submit: validate, POST to `/api/surplus-alerts`, create Firestore doc, send Slack notification, redirect to detail page
 - Mobile-first responsive design
 
 ---
 
-### Task 3.1.2: Implement Pickup Request Submission
+### Task P.2.3: Update Supplier Dashboard and Alert History
 
-**Reason**  
-Need to save request to database and notify team.
+**Reason**
+The donor dashboard and donation history pages need to reflect supplier-specific metrics and surplus alert tracking.
 
-**Goal**  
-Handle form submission with database write and Slack notification.
+**Goal**
+Rebrand and update the supplier-facing dashboard and history pages.
 
 **Technical Requirements**
-- Create `pages/api/pickup-requests.ts`:
-  ```typescript
-  // POST handler:
-  // 1. Validate request body
-  // 2. Verify user is authenticated
-  // 3. Create pickup request in Firestore
-  // 4. Send Slack notification
-  // 5. Return created request
-  ```
-- Create `lib/slack.ts`:
-  ```typescript
-  export async function sendPickupNotification(request: PickupRequest, donor: Donor) {
-    const message = {
-      blocks: [
-        {
-          type: 'header',
-          text: { type: 'plain_text', text: '🚨 New Pickup Request' }
-        },
-        {
-          type: 'section',
-          fields: [
-            { type: 'mrkdwn', text: `*Business:*\n${donor.businessName}` },
-            { type: 'mrkdwn', text: `*Contact:*\n${donor.contactName}` },
-            { type: 'mrkdwn', text: `*Address:*\n${formatAddress(request.pickupAddress)}` },
-            { type: 'mrkdwn', text: `*Food:*\n~${request.estimatedWeight} lbs - ${request.foodDescription}` },
-            { type: 'mrkdwn', text: `*Pickup:*\n${formatDate(request.pickupDate)}, ${request.pickupTimeWindow}` },
-            { type: 'mrkdwn', text: `*Contact on arrival:*\n${request.contactOnArrival}` },
-          ]
-        },
-        {
-          type: 'section',
-          text: { type: 'mrkdwn', text: `→ <${dashboardUrl}/admin/requests/${request.id}|View in dashboard>` }
-        }
-      ]
-    };
-    
-    await fetch(process.env.SLACK_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(message),
-    });
-  }
-  ```
-- On successful submission:
-  - Show success toast
-  - Redirect to `/donor/request/[id]` to view request
-- Handle errors gracefully
+
+- Update `pages/donor/dashboard.tsx` → `pages/supplier/dashboard.tsx`:
+  - Welcome header: "Welcome back, {businessName}"
+  - Impact stats: Pounds Rescued, Surplus Alerts Submitted, Active Alerts
+  - Pending alerts section with status cards
+  - Quick action: "Submit New Surplus Alert"
+- Update `pages/donor/history.tsx` → `pages/supplier/history.tsx`:
+  - Status filter tabs: All | Pending | Confirmed | Picked Up | Completed | Cancelled
+  - Table columns: Date, Produce, Category, Est. Weight, Actual Weight, Status
+  - Summary stats at top
+- Update `pages/donor/settings.tsx` → `pages/supplier/settings.tsx`:
+  - Business profile form with updated `SupplierType` dropdown
 
 ---
 
-### Task 3.1.3: Build Request Confirmation Page
+### Task P.2.4: Update Alert Detail and Confirmation Page
 
-**Reason**  
-Donors need to see their request was received and track its status.
+**Reason**
+Suppliers need to see the status of individual surplus alerts with produce-specific details.
 
-**Goal**  
-Create request detail page showing status and all request information.
+**Goal**
+Update the request detail page to show surplus alert information.
 
 **Technical Requirements**
-- Create `pages/donor/request/[id].tsx`
-- Display:
-  - Status badge (Pending, Confirmed, Completed, Cancelled)
-  - Submitted date/time
-  - Food description
-  - Estimated weight
-  - Pickup address
-  - Pickup date and time window
-  - Contact on arrival
-  - Special instructions (if any)
-  - Actual weight (if completed)
-- Status-specific messaging:
-  - Pending: "We've received your request and will confirm shortly."
-  - Confirmed: "Your pickup is confirmed! We'll see you on [date]."
-  - Completed: "Thank you! We rescued [X] lbs of food."
-  - Cancelled: "This request was cancelled."
-- "Back to Dashboard" link
-- Real-time updates using Firestore `onSnapshot` (optional for MVP)
-- Protect route: only allow donor who owns request or admin
+
+- Update `pages/donor/request/[id].tsx` → `pages/supplier/alert/[id].tsx`
+- Status-specific messaging (Pending, Confirmed, Picked Up, Completed, Cancelled)
+- Alert details section: produce description, category badges, weights, grade, alert type
+- Pickup logistics section: address, date, time window, contact, instructions
+- Timeline showing status changes with timestamps
 
 ---
 
-## Story 3.2: Donor Dashboard
+# Story P.3: Ops Dashboard Updates
 
 ### Story Description
-As a donor, I need a dashboard to view my pending requests, donation history, and impact so that I can track my contributions.
+
+As the MobilePantry operations team, we need the admin dashboard to show produce-specific information and cold chain data so that we can manage surplus alerts, confirm pickups, log weights and temperatures, and track supplier relationships effectively.
 
 ### Business Value
-- Provides donors visibility into their activity
-- Shows impact to encourage continued donations
-- Enables donors to self-serve for status checks
-- Reduces support inquiries
+
+- Ops team can manage the full produce rescue workflow from alert to completion
+- Temperature logging supports cold chain compliance per the Operations Playbook
+- Produce grading data helps track supplier quality over time
+- Metrics shift from donation-centric to rescue-centric
 
 ### Acceptance Criteria
-- [ ] Dashboard shows pending requests prominently
-- [ ] Donor can see their total impact (pounds donated, meals provided)
-- [ ] Recent donations displayed with status
-- [ ] Quick action to create new request
-- [ ] Dashboard loads quickly
+
+- [ ] Dashboard home shows updated metrics: pending alerts, weekly lbs rescued, active suppliers, avg pickup temp
+- [ ] Request detail page includes produce-specific fields and temp/grade logging on completion
+- [ ] Donor list → Supplier list with supplier-specific stats
+- [ ] Slack notifications updated with produce-specific details
+- [ ] Status flow includes new "Picked Up" state
 
 ---
 
-### Task 3.2.1: Build Donor Dashboard Page
+### Task P.3.1: Update Admin Dashboard Home and Metrics
 
-**Reason**  
-Central hub for donor activity and primary landing after login.
+**Reason**
+Dashboard metrics need to reflect produce rescue operations, not general food donations.
 
-**Goal**  
-Create donor dashboard with impact stats and request overview.
+**Goal**
+Update the admin home page with produce rescue metrics.
 
 **Technical Requirements**
-- Create `pages/donor/dashboard.tsx`
-- Sections:
-  1. **Welcome header**
-     - "Welcome back, [Business Name]"
-     - "Request a Pickup" button (prominent CTA)
-  2. **Impact stats** (card row)
-     - Total pounds donated
-     - Meals provided (pounds / 1.2)
-     - Number of donations
-  3. **Pending requests** (if any)
-     - Card for each pending/confirmed request
-     - Show: date, food description, status badge
-     - Click to view details
-     - If none: "No pending requests"
-  4. **Recent donations** (last 5)
-     - Table or card list
-     - Columns: Date, Description, Weight, Status
-     - "View all" link to history page
-- Use `getServerSideProps` to fetch data
-- Protect with `useRequireAuth` hook
-- Mobile responsive (cards stack on mobile)
+
+- Update `pages/admin/index.tsx`:
+  - Metrics cards: Pending Alerts, Lbs Rescued This Week, Active Suppliers, Avg Pickup Temp
+  - Temperature color-coding: green ≤38°F, yellow 39-41°F, red >41°F
+  - Pending alerts list with quick actions (Confirm | View Details)
+  - Recent activity table: Date, Supplier, Produce, Weight, Status, Temp
 
 ---
 
-### Task 3.2.2: Build Donation History Page
+### Task P.3.2: Update Admin Request Detail with Produce Fields
 
-**Reason**  
-Donors may want to see their full donation history for records or tax purposes.
+**Reason**
+When completing a pickup, the ops team needs to log actual weight, temperature, and produce grade per the Operations Playbook.
 
-**Goal**  
-Create paginated list of all donations.
+**Goal**
+Add produce-specific fields to the admin request detail page.
 
 **Technical Requirements**
-- Create `pages/donor/history.tsx`
-- Display:
-  - Table with columns: Date, Description, Weight, Status
-  - Click row to view request details
-  - Status badge coloring
-- Sorting:
-  - Default: newest first
-  - Allow sorting by date
-- Filtering (stretch goal):
-  - By status
-  - By date range
-- Pagination or infinite scroll (if >20 donations)
-- Summary at top:
-  - Total donations: X
-  - Total pounds: X
-- Empty state: "You haven't made any donations yet"
-- Export to CSV (stretch goal)
+
+- Update `pages/admin/requests/[id].tsx`:
+  - Alert info: produce description, categories, weight, case count, grade, alert type
+  - Status actions: Pending→Confirmed, Confirmed→Picked Up, Picked Up→Completed (with weight/temp/grade modal), Any→Cancelled
+  - Temperature warning if >41°F
+  - Supplier info section with link to supplier detail
+  - Timeline of status changes
 
 ---
 
-### Task 3.2.3: Build Donor Settings Page
+### Task P.3.3: Update Admin Lists and Slack Notifications
 
-**Reason**  
-Donors need to update their business info and account settings.
+**Reason**
+The admin requests list, suppliers list, and Slack notifications need produce-specific terminology.
 
-**Goal**  
-Create settings page for profile and account management.
+**Goal**
+Update all remaining admin pages and the Slack notification format.
 
 **Technical Requirements**
-- Create `pages/donor/settings.tsx`
-- Tabs or sections:
-  1. **Business Profile**
-     - Edit: Business name, contact name, phone, address, business type
-     - Save button
-     - Success toast on save
-  2. **Account Settings**
-     - Email display (read-only for now)
-     - Change password (for email/password users)
-     - Shows "Signed in with Google" for OAuth users
-  3. **Danger Zone** (optional for MVP)
-     - Delete account button
-     - Confirmation dialog
-- Form validation
-- Loading states
-- Pre-fill current values
+
+- Update `pages/admin/requests/index.tsx`: Add "Picked Up" status tab, produce-specific columns
+- Update `pages/admin/donors/` → `pages/admin/suppliers/`: Rebrand all donor references
+- Update `lib/slack.ts` with new surplus alert notification format
+- Rename API endpoint: `pages/api/pickup-requests.ts` → `pages/api/surplus-alerts.ts`
 
 ---
 
-# Sprint 4: Admin Dashboard + Polish (Feb 26 - Mar 12)
-
-## Story 4.1: Admin Dashboard
+# Story P.4: App Shell, Routing & Subdomain Config
 
 ### Story Description
-As an admin, I need a dashboard to view and manage all pickup requests so that I can coordinate food rescues efficiently.
+
+As a development team, we need to remove the public marketing pages from the Next.js app, update the routing structure, and configure the app to run on a subdomain.
 
 ### Business Value
-- Enables team to manage incoming requests
-- Provides visibility into operations
-- Tracks organizational impact
-- Supports quick response to donor requests
+
+- Clean separation between marketing (Webflow), e-commerce (Shopify), and operations (Next.js)
+- Reduces Next.js app to only operational pages
+- Enables marketing team to update mobilepantry.org without developer involvement
 
 ### Acceptance Criteria
-- [ ] Admins can view all pickup requests
-- [ ] Admins can filter requests by status
-- [ ] Admins can update request status
-- [ ] Admins can log actual weight after pickup
-- [ ] Admins can view all donors
-- [ ] Dashboard shows key metrics
-- [ ] Only admin emails can access admin routes
+
+- [ ] Public marketing pages (homepage, about, contact) removed from Next.js
+- [ ] App root (/) redirects to login or supplier dashboard based on auth state
+- [ ] Navigation updated — no marketing links, just supplier/admin portal links
+- [ ] Route structure updated from `/donor/` to `/supplier/`
+- [ ] Vercel configured for `app.mobilepantry.org` subdomain
+- [ ] CORS and environment variables updated for subdomain
 
 ---
 
-### Task 4.1.1: Build Admin Dashboard Home
+### Task P.4.1: Remove Marketing Pages and Update Routing
 
-**Reason**  
-Admins need an overview of operations and quick access to key functions.
+**Reason**
+The public marketing site is moving to Webflow. The Next.js app should only contain the supplier portal and ops dashboard.
 
-**Goal**  
-Create admin dashboard with metrics and recent activity.
+**Goal**
+Remove marketing pages and update the routing structure.
 
 **Technical Requirements**
-- Create `pages/admin/index.tsx`
-- Sections:
-  1. **Metrics cards**
-     - Pending requests (count, clickable)
-     - Rescues this week
-     - Total pounds rescued (all time)
-     - Active donors
-  2. **Pending requests** (urgent section)
-     - List of pending requests, newest first
-     - Show: Business name, date, time window, estimated weight
-     - Click to manage
-     - "View all requests" link
-  3. **Recent activity** (last 5 completed)
-     - Recently completed pickups
-     - Quick stats
-- Protect with `useRequireAdmin` hook
-- Quick action buttons: "View All Requests", "View All Donors"
-- Refresh button to reload data
+
+- Delete pages: `pages/index.tsx` (homepage), `pages/about.tsx`, `pages/contact.tsx`
+- New `pages/index.tsx`: redirect to `/supplier/dashboard` or `/auth/login` based on auth
+- Rename `/donor/` → `/supplier/` routes
+- Rename `/admin/donors/` → `/admin/suppliers/` routes
+- Add redirects in `next.config.js` for old routes
+- Update all internal links
 
 ---
 
-### Task 4.1.2: Build Admin Requests List Page
+### Task P.4.2: Update App Shell and Navigation
 
-**Reason**  
-Admins need to see all requests and filter by status.
+**Reason**
+The Header and Footer components reference marketing pages and use donor-centric language.
 
-**Goal**  
-Create requests list with filtering and quick actions.
+**Goal**
+Update the app shell to reflect the operational app context.
 
 **Technical Requirements**
-- Create `pages/admin/requests/index.tsx`
-- Table columns:
-  - Date submitted
-  - Business name
-  - Contact
-  - Pickup date
-  - Time window
-  - Est. weight
-  - Status (badge)
-  - Actions
-- Filters:
-  - Status tabs: All, Pending, Confirmed, Completed, Cancelled
-  - Date range (stretch goal)
-- Quick actions:
-  - Confirm (for pending)
-  - View details
-  - Cancel (with confirmation)
-- Sorting by date
-- Click row to view/edit details
-- Pagination if >20 requests
-- Mobile: card view instead of table
+
+- Update Header: Remove marketing nav links, add Supplier/Admin portal navigation
+- Update Footer: Simplified — "© 2026 MobilePantry · Driving to End Hunger" with external links to mobilepantry.org and shop.mobilepantry.org
+- Update Layout component
 
 ---
 
-### Task 4.1.3: Build Admin Request Detail Page
+### Task P.4.3: Configure Subdomain and Environment
 
-**Reason**  
-Admins need to view full request details and update status.
+**Reason**
+The app needs to run on `app.mobilepantry.org` as a subdomain.
 
-**Goal**  
-Create request management page with status controls.
+**Goal**
+Configure Vercel deployment for subdomain and update all environment references.
 
 **Technical Requirements**
-- Create `pages/admin/requests/[id].tsx`
-- Display all request info:
-  - Status badge (large)
-  - Food description
-  - Estimated weight
-  - Pickup address (with "Open in Maps" link)
-  - Pickup date and time window
-  - Contact on arrival
-  - Special instructions
-  - Donor info section:
-    - Business name (link to donor detail)
-    - Contact name
-    - Phone (clickable)
-    - Email (clickable)
-- Actions based on status:
-  - **Pending:**
-    - "Confirm Pickup" button → status = confirmed
-    - "Cancel Request" button → confirmation dialog → status = cancelled
-  - **Confirmed:**
-    - "Mark as Completed" → opens modal to enter actual weight
-    - "Cancel Request" button
-  - **Completed:**
-    - Display actual weight
-    - Display completed date
-    - No actions available
-  - **Cancelled:**
-    - Display cancelled reason (if any)
-    - No actions available
-- Actual weight modal:
-  - Number input for weight
-  - "Save & Complete" button
-  - Validates weight > 0
-- "Back to Requests" link
-- Timestamps: created, confirmed, completed
+
+- Vercel: Add custom domain `app.mobilepantry.org`, configure DNS
+- Webflow: Configure DNS for root domain
+- Update environment variables (`NEXT_PUBLIC_APP_URL=https://app.mobilepantry.org`)
+- Update Firebase Auth authorized domains
+- Update Slack dashboard links
+- Document in `docs/DNS_SETUP.md`
 
 ---
 
-### Task 4.1.4: Build Admin Donors List Page
-
-**Reason**  
-Admins need visibility into all donors for relationship management.
-
-**Goal**  
-Create donors list with key info and links.
-
-**Technical Requirements**
-- Create `pages/admin/donors/index.tsx`
-- Table columns:
-  - Business name
-  - Contact name
-  - Email
-  - Phone
-  - Total donated (lbs)
-  - Last donation date
-  - Actions
-- Search:
-  - By business name
-  - By contact name
-  - By email
-- Sorting:
-  - Default: most recent donation first
-  - By business name A-Z
-  - By total donated
-- Click row to view donor detail
-- Pagination if >20 donors
-
----
-
-### Task 4.1.5: Build Admin Donor Detail Page
-
-**Reason**  
-Admins may need to view donor details and their donation history.
-
-**Goal**  
-Create donor detail page with profile and history.
-
-**Technical Requirements**
-- Create `pages/admin/donors/[id].tsx`
-- Display:
-  - Business name (header)
-  - Contact info: name, email, phone, address
-  - Business type
-  - Member since (created date)
-  - Stats:
-    - Total donations
-    - Total pounds
-    - Meals provided
-- Donation history:
-  - Table of all requests from this donor
-  - Columns: Date, Description, Weight, Status
-  - Click to view request detail
-- Actions:
-  - "Edit Donor" (stretch goal)
-  - "View All Requests" filtered to this donor
-- "Back to Donors" link
-
----
-
-## Story 4.2: Slack Integration
+# Story P.5: Polish & Launch Prep
 
 ### Story Description
-As an admin, I need to receive Slack notifications for new pickup requests so that I can respond quickly to donors.
+
+As a development team, we need to verify the pivoted application works end-to-end, is mobile responsive, handles errors gracefully, and is ready for pilot launch with initial suppliers.
 
 ### Business Value
-- Enables immediate awareness of new requests
-- Supports quick response time to donors
-- Works with existing team communication tools
-- No additional cost
+
+- Ensures reliability for pilot launch with real suppliers
+- Mobile responsiveness is critical — suppliers may submit alerts from warehouse floors
+- Error handling prevents data loss and builds supplier trust
 
 ### Acceptance Criteria
-- [ ] New pickup request triggers Slack message
-- [ ] Message includes all relevant pickup details
-- [ ] Message includes link to admin dashboard
-- [ ] Notification works reliably
+
+- [ ] All pages mobile responsive (tested on 375px, 768px, 1024px breakpoints)
+- [ ] Error states and loading states present on all data-fetching pages
+- [ ] SEO meta tags updated for app.mobilepantry.org
+- [ ] Manual testing checklist covers full supplier and admin flows
+- [ ] Production environment verified with real subdomain
+- [ ] Launch day checklist created
 
 ---
 
-### Task 4.2.1: Set Up Slack App and Webhook
+### Task P.5.1: Mobile Responsiveness Audit
 
-**Reason**  
-Need Slack infrastructure in place before notifications can work.
-
-**Goal**  
-Create Slack app with incoming webhook configured.
-
-**Technical Requirements**
-- Create Slack app at api.slack.com:
-  - App name: "MobilePantry Bot"
-  - Description: "Notifications for food pickup requests"
-- Enable Incoming Webhooks
-- Create webhook for #pickup-requests channel
-- Add webhook URL to Vercel environment variables:
-  - Key: `SLACK_WEBHOOK_URL`
-  - Value: `https://hooks.slack.com/services/...`
-- Document setup in `docs/SLACK_SETUP.md`:
-  - How to create new webhook
-  - How to change notification channel
-  - Message format documentation
+Test all pages at 375px, 768px, 1024px. Verify surplus alert form is completable on mobile, touch targets ≥44px, tables switch to card view.
 
 ---
 
-### Task 4.2.2: Implement Slack Notification Function
+### Task P.5.2: Error Handling and Loading States
 
-**Reason**  
-Need reliable function to send formatted notifications to Slack.
-
-**Goal**  
-Create and test Slack notification sending.
-
-**Technical Requirements**
-- Create `lib/slack.ts` (if not already done in 3.1.2)
-- Implement `sendPickupNotification` function
-- Message format using Slack Block Kit:
-  - Header: "🚨 New Pickup Request"
-  - Business name and contact
-  - Pickup address
-  - Food description with estimated weight
-  - Pickup date and time window
-  - Contact on arrival instructions
-  - Special instructions (if any)
-  - Link to admin dashboard
-- Error handling:
-  - Log errors but don't fail request submission
-  - Consider retry logic (optional)
-- Test in development with test channel
-- Create `lib/slack.test.ts` for manual testing script
+Add skeleton loaders, form state persistence to sessionStorage, retry logic, user-friendly error messages, and empty states.
 
 ---
 
-## Story 4.3: Polish and Launch Prep
+### Task P.5.3: SEO and Meta Tags
 
-### Story Description
-As a development team, we need to polish the application and prepare for launch so that we can deploy a reliable MVP.
-
-### Business Value
-- Ensures quality user experience at launch
-- Reduces bugs and issues during pilot
-- Creates documentation for ongoing maintenance
-- Prepares team for production support
-
-### Acceptance Criteria
-- [ ] All pages are mobile responsive
-- [ ] No console errors in production build
-- [ ] Loading states exist for all async operations
-- [ ] Error states handled gracefully
-- [ ] Basic SEO meta tags on all pages
-- [ ] Manual testing checklist completed
-- [ ] Production environment configured
+Update default meta (title: "MobilePantry | Supplier Portal"), per-page titles, add robots.txt, canonical URLs for `app.mobilepantry.org`.
 
 ---
 
-### Task 4.3.1: Mobile Responsiveness Audit
+### Task P.5.4: Testing Checklist and Launch Day Runbook
 
-**Reason**  
-Many donors will access the site from mobile devices.
-
-**Goal**  
-Ensure all pages work well on mobile devices.
-
-**Technical Requirements**
-- Test all pages on:
-  - iPhone SE (small)
-  - iPhone 14 (medium)
-  - iPad (tablet)
-  - Desktop (1024px+)
-- Fix issues with:
-  - Navigation menu on mobile
-  - Form field sizes
-  - Table layouts (switch to cards on mobile)
-  - Button sizes (min 44px touch target)
-  - Text readability
-- Use Chrome DevTools device emulation
-- Test on real devices if available
-- Document any known mobile limitations
+Create `docs/TESTING_CHECKLIST.md` and `docs/LAUNCH_CHECKLIST.md` covering full supplier flow, admin flow, mobile testing, and edge cases.
 
 ---
 
-### Task 4.3.2: Error Handling and Loading States
+# Backlog (Post-Pivot Launch)
 
-**Reason**  
-Users need feedback when things are loading or when errors occur.
+## Story B.1: Shopify Integration
 
-**Goal**  
-Audit and improve all loading and error states.
+Connect Shopify subscription store to platform. Subscription product ($7/week, $28/month), free box promo codes, order data in ops dashboard.
 
-**Technical Requirements**
-- Audit all pages for:
-  - Loading states during data fetch
-  - Error states when fetch fails
-  - Empty states when no data
-- Implement missing states:
-  - Spinner component for loading
-  - Error component with retry button
-  - Empty state illustrations/messages
-- Error boundary:
-  - Create `components/ErrorBoundary.tsx`
-  - Wrap app in error boundary
-  - Show friendly error message
-  - Log errors for debugging
-- 404 page:
-  - Create `pages/404.tsx`
-  - Friendly message with link home
-- API error handling:
-  - Consistent error response format
-  - User-friendly error messages
+## Story B.2: Standing Pickup Automation
+
+Auto-generate weekly surplus alerts for standing pickups. Suppliers can pause, modify, or cancel.
+
+## Story B.3: Supplier Onboarding Automation
+
+Track 4-week pilot onboarding: Outreach → Discovery Visit → Pilot → Formalized. MOU management, impact reports.
+
+## Story B.4: Public Impact Dashboard
+
+Public page with aggregated stats, trend charts, embeddable widget for partners.
 
 ---
 
-### Task 4.3.3: SEO and Meta Tags
-
-**Reason**  
-Need basic SEO for discoverability and social sharing.
-
-**Goal**  
-Add meta tags and SEO essentials to all pages.
-
-**Technical Requirements**
-- Create `components/SEO.tsx`:
-  ```typescript
-  interface SEOProps {
-    title: string;
-    description: string;
-    ogImage?: string;
-  }
-  ```
-- Use Next.js `Head` component
-- Default meta tags:
-  - Title: "[Page] | MobilePantry"
-  - Description: Page-specific
-  - Open Graph tags
-  - Twitter card tags
-- Add to all public pages:
-  - Homepage
-  - About
-  - Contact
-- Create default OG image (1200x630px)
-- Add favicon:
-  - favicon.ico
-  - apple-touch-icon.png
-- robots.txt allowing all
-- sitemap.xml (stretch goal)
-
----
-
-### Task 4.3.4: Create Manual Testing Checklist
-
-**Reason**  
-Need systematic way to verify all functionality before launch.
-
-**Goal**  
-Create comprehensive manual testing checklist.
-
-**Technical Requirements**
-- Create `docs/MANUAL_TESTING_CHECKLIST.md`
-- Include test cases for:
-  - **Visitor Flow:**
-    - Homepage loads correctly
-    - Navigation works
-    - About page loads
-    - Contact form submits
-  - **Donor Registration:**
-    - Email/password signup works
-    - Google OAuth signup works
-    - Profile completion (Google users)
-    - Validation errors display correctly
-  - **Donor Login:**
-    - Email/password login works
-    - Google OAuth login works
-    - Forgot password flow works
-    - Invalid credentials show error
-  - **Pickup Request:**
-    - Form loads with pre-filled address
-    - All fields validate correctly
-    - Submission creates Firestore document
-    - Slack notification sent
-    - Confirmation page displays
-  - **Donor Dashboard:**
-    - Stats display correctly
-    - Pending requests show
-    - Recent donations show
-    - Links work
-  - **Admin Dashboard:**
-    - Only accessible by admin emails
-    - Metrics display correctly
-    - Requests list loads
-    - Can update request status
-    - Can log actual weight
-    - Donors list loads
-- Assign testers
-- Track results
-- Document bugs found
-
----
-
-### Task 4.3.5: Production Environment Setup
-
-**Reason**  
-Need secure, properly configured production environment for launch.
-
-**Goal**  
-Finalize production configuration on Vercel and Firebase.
-
-**Technical Requirements**
-- Vercel:
-  - Verify all environment variables set
-  - Configure custom domain (if available)
-  - Enable analytics (optional)
-  - Set up error notifications
-- Firebase:
-  - Verify production project settings
-  - Deploy Firestore security rules
-  - Enable only needed auth providers
-  - Set up Firebase project budget alerts
-- Update ADMIN_EMAILS:
-  - Add actual admin email addresses
-  - Update Firestore rules with admin emails
-- Create production checklist:
-  - [ ] All env vars configured
-  - [ ] Domain configured
-  - [ ] Security rules deployed
-  - [ ] Admin emails set
-  - [ ] Slack webhook verified
-- Document rollback procedure
-
----
-
-### Task 4.3.6: Launch Day Checklist
-
-**Reason**  
-Need structured approach to go-live.
-
-**Goal**  
-Create launch day runbook.
-
-**Technical Requirements**
-- Create `docs/LAUNCH_CHECKLIST.md`:
-  - Pre-launch (day before):
-    - [ ] All tests passing
-    - [ ] Manual testing complete
-    - [ ] No blocking bugs
-    - [ ] Team briefed on launch plan
-  - Launch morning:
-    - [ ] Final production deploy
-    - [ ] Verify site loads correctly
-    - [ ] Test donor signup flow
-    - [ ] Test pickup request flow
-    - [ ] Verify Slack notification works
-    - [ ] Test admin dashboard access
-  - Post-launch:
-    - [ ] Monitor for errors
-    - [ ] Check Slack for notifications
-    - [ ] Team available for issues
-    - [ ] Document any issues found
-- Create rollback plan:
-  - How to revert to previous deploy
-  - Who can perform rollback
-  - When to decide to rollback
-- Communication plan:
-  - Who announces launch
-  - Where to report issues
-
----
-
-# Backlog (Post-MVP)
-
-These stories are documented for future planning but not scheduled for MVP.
-
-## Story B.1: Automated Thank-You Emails
-
-**Description:** As a donor, I want to receive a thank-you email after my donation is completed so that I feel appreciated and can see my impact.
-
-**Acceptance Criteria:**
-- Email sent when pickup marked complete
-- Includes: pounds rescued, meals provided, CO2 prevented
-- Uses professional email template
-- Sent via Resend or similar service
-
----
-
-## Story B.2: Destinations Management
-
-**Description:** As an admin, I need to track where food is delivered so that we can report on our impact by recipient organization.
-
-**Acceptance Criteria:**
-- CRUD for destination organizations
-- Assign destination to pickup requests
-- Report: pounds delivered per destination
-
----
-
-## Story B.3: Public Impact Dashboard
-
-**Description:** As a funder or partner, I want to see MobilePantry's impact data so that I can evaluate their effectiveness.
-
-**Acceptance Criteria:**
-- Public page showing aggregated stats
-- Charts showing trends over time
-- Embeddable widget for partners
-
----
-
-## Story B.4: Volunteer Coordination (Mobile App)
-
-**Description:** As a volunteer, I need a mobile app to claim available rescues so that I can help with food pickups.
-
-**Acceptance Criteria:**
-- View available rescues
-- Claim a rescue
-- Get directions to pickup and delivery
-- Mark rescue complete
-
----
-
-*— End of Epic Breakdown —*
+_— End of Pivot Sprint Epic —_

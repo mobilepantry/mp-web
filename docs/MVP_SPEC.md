@@ -1,6 +1,6 @@
-# MobilePantry MVP Product Specification
+# MobilePantry Product Specification — Produce Rescue Platform
 
-**Version:** 1.0 | **Target Launch:** March 2026  
+**Version:** 2.0 (Post-Pivot) | **Target Launch:** March 15, 2026
 **Development Team:** 2-4 CS Students
 
 ---
@@ -9,23 +9,33 @@
 
 ### Product Vision
 
-MobilePantry is a food rescue nonprofit connecting Columbus businesses with surplus food to community organizations in need. The MVP is a web application that makes it as frictionless as possible for food donors to coordinate pickup requests with the MobilePantry team.
+MobilePantry is a produce rescue nonprofit connecting Columbus-area produce distributors, farms, and grocery stores with MobilePantry's operations team. The platform rescues cosmetically imperfect surplus produce, packs subscription boxes, and delivers to paying customers and community partners.
 
-### MVP Scope
+The web application (app.mobilepantry.org) serves as the operational hub — a supplier portal for produce sources and an ops dashboard for the MobilePantry team.
 
-- Public-facing marketing website
-- Donor accounts with simple signup/login
-- Frictionless pickup request form
-- Slack notifications to team on new requests
-- Admin dashboard for managing requests
+### Platform Scope
 
-### Explicitly Out of Scope
+- **Supplier Portal:** Produce distributors and farms alert MobilePantry of available surplus and schedule pickups
+- **Ops Dashboard:** MobilePantry team manages surplus alerts, confirms pickups, logs weights/temps, tracks supplier relationships
+- **Slack Notifications:** Team receives structured alerts on new surplus submissions
 
+### Architecture
+
+```
+mobilepantry.org            → Webflow (marketing, story, blog, email capture)
+shop.mobilepantry.org       → Shopify (subscription boxes, free box promo codes)
+app.mobilepantry.org        → Next.js on Vercel (supplier portal + ops dashboard)
+```
+
+### Explicitly Out of Scope (handled externally)
+
+- Public marketing site (Webflow)
+- E-commerce / subscription management (Shopify)
 - Volunteer coordination and rescue claiming
 - Mobile app
 - Popup event management
 - Recipient/agency portal
-- Automated email notifications (post-MVP)
+- Automated email notifications (post-launch)
 - Route optimization
 
 ---
@@ -34,13 +44,15 @@ MobilePantry is a food rescue nonprofit connecting Columbus businesses with surp
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| Framework | Next.js 14 (Pages Router) | React-based, file routing, SSG for SEO |
+| Framework | Next.js 14 (Pages Router) | React-based, file routing |
 | Styling | Tailwind CSS | Utility-first, fast development |
 | UI Components | shadcn/ui | Accessible, copy-paste components |
 | Database | Firebase Firestore | NoSQL, real-time, generous free tier |
 | Authentication | Firebase Auth | Email/password + Google OAuth |
-| Hosting | Vercel | Free tier, seamless Next.js deploy |
-| Notifications | Slack Webhooks | Free, instant team alerts |
+| Hosting | Vercel | Subdomain: app.mobilepantry.org |
+| Notifications | Slack Webhooks | Structured surplus alert notifications |
+| Marketing | Webflow | mobilepantry.org |
+| E-commerce | Shopify | shop.mobilepantry.org |
 
 ---
 
@@ -48,166 +60,177 @@ MobilePantry is a food rescue nonprofit connecting Columbus businesses with surp
 
 | Role | Description | Auth |
 |------|-------------|------|
-| Visitor | Anyone viewing public marketing pages | None |
-| Donor | Business requesting food pickups | Email/password or Google |
-| Admin | MobilePantry team (2 people) | Email/password only |
+| Supplier | Produce distributor/farm submitting surplus alerts | Email/password or Google |
+| Admin | MobilePantry ops team (2 people) | Email/password only |
 
-> **Note:** One account = one business. Donors specify pickup address on each request, so multi-location businesses can use a single account and enter different addresses as needed.
+> **Note:** One account = one business. Suppliers specify pickup address on each alert, so multi-location businesses can use a single account and enter different addresses as needed.
 
 ---
 
 ## 4. User Stories
 
-### 4.1 Visitor (Public Website)
+### 4.1 Supplier
 
-- As a visitor, I can learn about MobilePantry's mission so I understand what the organization does.
-- As a visitor, I can see impact stats (pounds rescued, meals provided) to understand the organization's reach.
-- As a visitor, I can navigate to donor signup if I want to donate food.
-- As a visitor, I can find contact information.
+- As a supplier, I can create an account quickly (Google OAuth or email).
+- As a supplier, I can submit a surplus alert with produce-specific details (category, weight, case count, grade).
+- As a supplier, I can choose between a one-time (ad-hoc) alert or a standing weekly pickup.
+- As a supplier, I can see the status of my pending alerts (pending → confirmed → picked up → completed).
+- As a supplier, I can view my alert history and total impact (lbs rescued).
+- As a supplier, I can update my business/contact information.
 
-### 4.2 Donor
+### 4.2 Admin (Ops Team)
 
-- As a donor, I can create an account quickly (Google OAuth or email).
-- As a donor, I can submit a pickup request with minimal friction.
-- As a donor, I can see the status of my pending requests.
-- As a donor, I can view my donation history and total impact.
-- As a donor, I can update my business/contact information.
-
-### 4.3 Admin
-
-- As an admin, I receive a Slack notification when a new request is submitted.
-- As an admin, I can view all incoming pickup requests.
-- As an admin, I can update request status (pending, confirmed, completed, cancelled).
-- As an admin, I can log the actual weight after completing a pickup.
-- As an admin, I can view and manage all donors.
-- As an admin, I can see dashboard metrics (total pounds, active donors, etc.).
+- As an admin, I receive a Slack notification when a new surplus alert is submitted.
+- As an admin, I can view all incoming surplus alerts with produce details.
+- As an admin, I can update alert status through the full workflow (pending → confirmed → picked up → completed).
+- As an admin, I can log actual weight, temperature at pickup, and produce grade on completion.
+- As an admin, I can see temperature compliance warnings (>41°F per cold chain SOP).
+- As an admin, I can view and manage all suppliers with per-supplier stats.
+- As an admin, I can see dashboard metrics (lbs rescued, active suppliers, avg temp, pending alerts).
 
 ---
 
 ## 5. Data Model
 
-### 5.1 Donors Collection
+### 5.1 Suppliers Collection (Firestore: `donors`)
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `id` | string | Auto-generated |
 | `email` | string | Required, unique |
-| `businessName` | string | Required |
+| `businessName` | string | Required (e.g., "DNO Produce") |
 | `contactName` | string | Required |
 | `phone` | string | Required |
-| `address` | object | street, city, state, zip |
-| `businessType` | string | Restaurant, Grocery, Caterer, etc. |
+| `businessAddress` | object | street, city, state, zip |
+| `businessType` | string | distributor, wholesale, farm, grocery, restaurant, processor, other |
+| `userId` | string | Firebase Auth UID |
 | `createdAt` | timestamp | Auto-set on creation |
+| `updatedAt` | timestamp | Auto-set on update |
 
-### 5.2 Pickup Requests Collection
+### 5.2 Surplus Alerts Collection (Firestore: `pickupRequests`)
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `id` | string | Auto-generated |
-| `donorId` | string | Reference to donor |
-| `status` | string | pending \| confirmed \| completed \| cancelled |
-| `foodDescription` | string | What food is available |
-| `estimatedWeight` | number | Donor estimate in lbs |
+| `supplierId` | string | Reference to supplier |
+| `status` | string | pending \| confirmed \| picked-up \| completed \| cancelled |
+| `produceDescription` | string | What produce is available |
+| `produceCategory` | string[] | Multi-select: fruits, vegetables, leafy-greens, root-vegetables, herbs, mixed, other |
+| `estimatedWeightLbs` | number | Supplier estimate in lbs |
+| `estimatedCaseCount` | number? | Optional — not all suppliers think in cases |
+| `produceGrade` | string? | A, B, or C (supplier estimate, optional) |
+| `alertType` | string | ad-hoc \| standing |
 | `pickupAddress` | object | street, city, state, zip |
-| `pickupDate` | date | Requested pickup date |
+| `pickupDate` | string | ISO date |
 | `pickupTimeWindow` | string | morning \| afternoon \| evening |
-| `contactOnArrival` | string | How to reach donor on arrival |
-| `specialInstructions` | string | Optional notes |
-| `actualWeight` | number | Logged by admin after pickup |
-| `confirmedAt` | timestamp | When team confirmed |
-| `completedAt` | timestamp | When pickup completed |
+| `contactOnArrival` | string | How to reach supplier on arrival |
+| `specialInstructions` | string? | Optional notes |
+| `actualWeightLbs` | number? | Logged by admin after pickup |
+| `temperatureAtPickup` | number? | °F — must be ≤41°F per SOP |
+| `actualGrade` | string? | A, B, or C (logged by admin) |
 | `createdAt` | timestamp | Auto-set on creation |
+| `updatedAt` | timestamp | Auto-set on update |
 
 ### 5.3 Impact Metrics (Computed)
 
 | Metric | Calculation |
 |--------|-------------|
-| Total Pounds Rescued | Sum of actualWeight for completed pickups |
+| Total Pounds Rescued | Sum of `actualWeightLbs` for completed alerts |
 | Total Meals Provided | Total Pounds / 1.2 (industry standard) |
-| Total Rescues | Count of completed pickups |
-| Active Donors | Count of donors with 1+ completed pickup |
+| Total Rescues | Count of completed alerts |
+| Active Suppliers | Count of suppliers with 1+ alert in last 30 days |
+| Avg Pickup Temperature | Average `temperatureAtPickup` for completed alerts |
+| Cold Chain Compliance Rate | % of pickups with temp ≤41°F |
 
 ---
 
-## 6. Pickup Request Form
+## 6. Surplus Alert Form
 
-This is the core donor experience. The form should be mobile-friendly and completable in under 2 minutes.
+This is the core supplier experience. The form should be mobile-friendly and completable in under 3 minutes.
 
 | Field | Type | Required | Notes |
 |-------|------|----------|-------|
-| What food do you have? | Textarea | Yes | Description + quantity |
-| Estimated amount (lbs) | Number | Yes | Numeric input |
-| Pickup address | Address fields | Yes | Pre-fill from account |
+| What produce is available? | Textarea | Yes | Description + quantity |
+| Produce category | Multi-select checkboxes | Yes | At least one category |
+| Estimated weight (lbs) | Number | Yes | Min 1 |
+| Estimated case count | Number | No | "If applicable" |
+| Produce grade | Select | No | A/B/C/Not sure |
+| Alert type | Radio | Yes | Ad-hoc (default) or Standing weekly |
+| Pickup address | Address fields | Yes | Pre-fill from profile |
 | Pickup date | Date picker | Yes | Default to today |
 | Pickup time window | Select | Yes | Morning / Afternoon / Evening |
-| Best way to contact on arrival | Text | Yes | Phone, ask for X, etc. |
-| Special instructions | Textarea | No | Loading dock, buzzer, etc. |
+| Contact on arrival | Text | Yes | Phone, ask for X, etc. |
+| Special instructions | Textarea | No | Loading dock, bring bins, etc. |
 
 ---
 
 ## 7. Page Structure
 
-### 7.1 Public Pages
-
-| Route | Description |
-|-------|-------------|
-| `/` | Homepage - mission, impact stats, CTAs |
-| `/about` | About page - story, team, mission details |
-| `/contact` | Contact form, email, phone |
-
-### 7.2 Auth Pages
+### 7.1 Auth Pages
 
 | Route | Description |
 |-------|-------------|
 | `/auth/login` | Login (email/password + Google OAuth) |
-| `/auth/signup` | Donor registration |
+| `/auth/signup` | Supplier registration |
 | `/auth/forgot-password` | Password reset flow |
+| `/auth/complete-profile` | Finish supplier profile setup |
 
-### 7.3 Donor Portal
-
-| Route | Description |
-|-------|-------------|
-| `/donor/dashboard` | Overview: recent requests, impact stats |
-| `/donor/request` | New pickup request form |
-| `/donor/request/[id]` | View specific request details |
-| `/donor/history` | All past donations |
-| `/donor/settings` | Edit profile, change password |
-
-### 7.4 Admin Dashboard
+### 7.2 Supplier Portal
 
 | Route | Description |
 |-------|-------------|
-| `/admin` | Dashboard: metrics, recent activity |
-| `/admin/requests` | All requests, filter by status |
-| `/admin/requests/[id]` | View/edit request, update status, log weight |
-| `/admin/donors` | List all donors |
-| `/admin/donors/[id]` | Donor detail + their donation history |
+| `/supplier/dashboard` | Overview: pending alerts, impact stats, recent activity |
+| `/supplier/alert` | New surplus alert form |
+| `/supplier/alert/[id]` | View specific alert details and status |
+| `/supplier/history` | All past alerts with status filters |
+| `/supplier/settings` | Edit business profile, change password |
+
+### 7.3 Ops Dashboard (Admin)
+
+| Route | Description |
+|-------|-------------|
+| `/admin` | Dashboard: metrics, pending alerts, recent activity |
+| `/admin/requests` | All surplus alerts, filter by status |
+| `/admin/requests/[id]` | View/edit alert, update status, log weight/temp/grade |
+| `/admin/suppliers` | List all suppliers with stats |
+| `/admin/suppliers/[id]` | Supplier detail + their alert history |
+
+### 7.4 Root
+
+| Route | Description |
+|-------|-------------|
+| `/` | Redirect: authenticated → dashboard, unauthenticated → login |
 
 ---
 
-## 8. Core Flow: Pickup Request Lifecycle
+## 8. Core Flow: Surplus Alert Lifecycle
 
-1. **Donor submits request** - Form data saved to Firestore with status = "pending"
-2. **Slack notification fires** - Webhook posts formatted message to #pickup-requests channel
-3. **Team reviews request** - Admin views in dashboard, coordinates pickup
-4. **Admin confirms** - Status updated to "confirmed", donor sees update
-5. **Team completes pickup** - Admin logs actual weight, status = "completed"
-6. **[Future] Thank-you email** - Automated email with impact metrics sent to donor
+1. **Supplier submits alert** — Form data saved to Firestore with status = "pending"
+2. **Slack notification fires** — Webhook posts formatted surplus alert to #surplus-alerts channel
+3. **Ops team reviews** — Admin views in dashboard, coordinates pickup
+4. **Admin confirms** — Status updated to "confirmed", supplier sees update
+5. **Driver picks up** — Admin marks "picked up"
+6. **Team completes rescue** — Admin logs actual weight, temperature (must be ≤41°F), produce grade → status = "completed"
+7. **[Future] Thank-you email** — Automated email with impact metrics sent to supplier
 
 ### Slack Notification Format
 
-When a donor submits a request, the following message is posted to your Slack channel:
+When a supplier submits a surplus alert, the following message is posted to Slack:
 
 ```
-🚨 New Pickup Request
-
-Business: Joe's Deli
-Contact: Joe Smith
-Address: 123 Main St, Columbus OH
-Food: ~50 lbs sandwiches, salads
-Pickup: Tomorrow, Afternoon
-Contact on arrival: Call 614-555-1234
-
+🥬 New Surplus Alert
+─────────────────
+Supplier:    DNO Produce
+Contact:     John Smith
+Produce:     Mixed stone fruit, leafy greens
+Categories:  🍎 Fruits, 🥬 Leafy Greens
+Est. Weight: ~500 lbs (30 cases)
+Grade:       B — Noticeable blemishes, fully edible
+Pickup:      Mar 5, Morning (8am–12pm)
+Address:     737 Parkwood Ave, Columbus OH
+Type:        Ad-hoc
+Contact:     Call 614-555-1234, ask for warehouse mgr
+─────────────────
 → View in dashboard: [link]
 ```
 
@@ -218,57 +241,52 @@ Contact on arrival: Call 614-555-1234
 1. Go to api.slack.com/apps and create a new app
 2. Select "Incoming Webhooks" and enable
 3. Click "Add New Webhook to Workspace"
-4. Select the #pickup-requests channel (create it first)
+4. Select the #surplus-alerts channel (create it first)
 5. Copy the webhook URL
 6. Add to your `.env.local` file as `SLACK_WEBHOOK_URL`
 
-The webhook is called from a Next.js API route when a pickup request is submitted.
+The webhook is called from a Next.js API route when a surplus alert is submitted.
 
 ---
 
 ## 10. Development Timeline
 
-Assuming 2-4 developers working 10-15 hours/week each:
+### Pivot Sprint (Mar 2–12, 2026)
 
-| Phase | Duration | Deliverables |
-|-------|----------|--------------|
-| 1 | Week 1-2 | Project setup, auth flow, database schema, routing |
-| 2 | Week 2-3 | Public pages: home, about, contact |
-| 3 | Week 3-5 | Donor portal: signup, login, dashboard, request form |
-| 4 | Week 5-7 | Admin dashboard: requests, donors, status management |
-| 5 | Week 7-8 | Slack integration, metrics, polish |
-| 6 | Week 8-9 | Bug fixes, mobile responsiveness, testing |
-| 7 | Week 9-10 | Final testing, seed data, production deploy |
+| Story | Focus | Tasks |
+|-------|-------|-------|
+| P.1 | Data Model & Schema Updates | 3 |
+| P.2 | Supplier Portal Rebrand | 4 |
+| P.3 | Ops Dashboard Updates | 3 |
+| P.4 | App Shell, Routing & Subdomain Config | 3 |
+| P.5 | Polish & Launch Prep | 4 |
+| **Total** | | **17 tasks** |
 
-**Target:** MVP live by early-to-mid March 2026
+**Target:** Pivot live by March 15, 2026
 
 ---
 
-## 11. Future Considerations (Post-MVP)
+## 11. Future Considerations (Post-Launch Backlog)
 
-These features are out of scope for MVP but worth designing with in mind:
-
-- **Automated thank-you emails** - Send impact report after completed pickup
-- **Volunteer coordination** - Mobile app for volunteers to claim rescues
-- **Recipient portal** - Agencies can view incoming deliveries
-- **Destinations management** - Track where food goes
-- **SMS notifications** - Twilio integration for team alerts
-- **Public impact dashboard** - Embeddable stats for funders
-- **Route optimization** - Efficient pickup routing for multiple rescues
-- **Popup event management** - Track community distribution events
+- **Shopify integration** — Subscription box management, order data in ops dashboard
+- **Standing pickup automation** — Auto-generate weekly alerts for recurring suppliers
+- **Supplier onboarding automation** — Track pilot stages: Outreach → Discovery → Pilot → Formalized
+- **Public impact dashboard** — Embeddable stats for funders and partners
+- **Automated thank-you emails** — Send impact report after completed rescue
+- **Volunteer coordination** — Mobile app for volunteers to claim rescues
+- **Route optimization** — Efficient pickup routing for multiple rescues
+- **Recipient portal** — Community partners view incoming deliveries
 
 ---
 
 ## 12. Admin Access (MVP Approach)
 
-For MVP with 2 admins, use a simple allowlist approach:
+For launch with 2 admins, use a simple allowlist approach:
 
 1. Store admin emails in environment variable: `ADMIN_EMAILS`
 2. When user logs in, check if their email is in the allowlist
 3. If yes, show admin navigation and allow access to `/admin` routes
 4. Protect API routes with same check
-
-This avoids needing a separate admin users table or role management system for now. When you need more admins or granular permissions, you can add a proper roles system.
 
 ---
 

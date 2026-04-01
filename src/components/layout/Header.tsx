@@ -15,18 +15,23 @@ import {
 
 const INSTAGRAM_URL = 'https://www.instagram.com/mobilepantryapp';
 const LINKEDIN_URL = 'https://www.linkedin.com/company/mobilepantry/';
-const EMAIL = 'info@mobilepantry.org';
 
 export function Header() {
   const { user, isAdmin, signOut, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const logoHref = user
+    ? isAdmin
+      ? '/admin'
+      : '/supplier/dashboard'
+    : '/';
+
   return (
-    <header className="w-full bg-white border-b-4 border-primary">
+    <header className="w-full bg-background border-b-4 border-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href={logoHref} className="flex items-center">
             <Image
               src="/MP Wordmark 2 .svg"
               alt="MobilePantry"
@@ -37,8 +42,37 @@ export function Header() {
             />
           </Link>
 
-          {/* Right side - Social + Auth */}
+          {/* Right side - Nav + Social + Auth */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Nav links for logged-in users */}
+            {!loading && user && !isAdmin && (
+              <>
+                <Link href="/supplier/dashboard" className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  Dashboard
+                </Link>
+                <Link href="/supplier/alert" className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  Submit Alert
+                </Link>
+                <Link href="/supplier/history" className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  History
+                </Link>
+              </>
+            )}
+
+            {!loading && user && isAdmin && (
+              <>
+                <Link href="/admin" className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  Dashboard
+                </Link>
+                <Link href="/admin/requests" className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  Alerts
+                </Link>
+                <Link href="/admin/suppliers" className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  Suppliers
+                </Link>
+              </>
+            )}
+
             {/* Social Icons */}
             <a
               href={INSTAGRAM_URL}
@@ -59,7 +93,7 @@ export function Header() {
               <LinkedInIcon className="w-6 h-6" />
             </a>
 
-            {/* Auth Buttons */}
+            {/* Auth Buttons / User Dropdown */}
             {!loading && (
               <>
                 {user ? (
@@ -71,19 +105,11 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild>
-                        <Link href="/donor/dashboard">Donor Dashboard</Link>
+                        <Link href="/supplier/settings">Settings</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/donor/settings">Settings</Link>
-                      </DropdownMenuItem>
-                      {isAdmin && (
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin">Admin Dashboard</Link>
-                        </DropdownMenuItem>
-                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => signOut()}>
-                        Logout
+                        Log Out
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -91,12 +117,12 @@ export function Header() {
                   <>
                     <Link href="/auth/login">
                       <Button variant="outline" size="sm" className="text-primary border-primary hover:bg-primary hover:text-white">
-                        Login
+                        Log In
                       </Button>
                     </Link>
                     <Link href="/auth/signup">
-                      <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white">
-                        Register
+                      <Button size="sm" className="bg-foreground hover:bg-foreground/80 text-background">
+                        Sign Up
                       </Button>
                     </Link>
                   </>
@@ -107,7 +133,7 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 text-gray-700"
+            className="md:hidden p-2 text-foreground/80"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -121,29 +147,61 @@ export function Header() {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-100">
+          <div className="md:hidden pb-4 border-t border-border">
             <nav className="flex flex-col gap-2 pt-4">
-              <Link
-                href="/"
-                className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/about"
-                className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Contact
-              </Link>
+              {/* Nav links for logged-in users */}
+              {!loading && user && !isAdmin && (
+                <>
+                  <Link
+                    href="/supplier/dashboard"
+                    className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/supplier/alert"
+                    className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Submit Alert
+                  </Link>
+                  <Link
+                    href="/supplier/history"
+                    className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    History
+                  </Link>
+                </>
+              )}
+
+              {!loading && user && isAdmin && (
+                <>
+                  <Link
+                    href="/admin"
+                    className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/admin/requests"
+                    className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Alerts
+                  </Link>
+                  <Link
+                    href="/admin/suppliers"
+                    className="px-2 py-2 text-gray-700 hover:text-primary transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Suppliers
+                  </Link>
+                </>
+              )}
+
               <div className="flex items-center gap-4 px-2 pt-2">
                 <a
                   href={INSTAGRAM_URL}
@@ -169,48 +227,32 @@ export function Header() {
                   {user ? (
                     <>
                       <Link
-                        href="/donor/dashboard"
-                        className="text-gray-700 hover:text-primary"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Donor Dashboard
-                      </Link>
-                      <Link
-                        href="/donor/settings"
-                        className="text-gray-700 hover:text-primary"
+                        href="/supplier/settings"
+                        className="text-foreground/80 hover:text-primary"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Settings
                       </Link>
-                      {isAdmin && (
-                        <Link
-                          href="/admin"
-                          className="text-gray-700 hover:text-primary"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          Admin Dashboard
-                        </Link>
-                      )}
                       <button
                         onClick={() => {
                           signOut();
                           setMobileMenuOpen(false);
                         }}
-                        className="text-left text-gray-700 hover:text-primary"
+                        className="text-left text-foreground/80 hover:text-primary"
                       >
-                        Logout
+                        Log Out
                       </button>
                     </>
                   ) : (
                     <>
                       <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" size="sm" className="w-full text-primary border-primary hover:bg-primary hover:text-white">
-                          Login
+                          Log In
                         </Button>
                       </Link>
                       <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)}>
                         <Button size="sm" className="w-full bg-gray-900 hover:bg-gray-800 text-white">
-                          Register
+                          Sign Up
                         </Button>
                       </Link>
                     </>

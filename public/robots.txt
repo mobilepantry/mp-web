@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /auth/login
+Allow: /auth/signup
+Disallow: /supplier/
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://app.mobilepantry.org/sitemap.xml

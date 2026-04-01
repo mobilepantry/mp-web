@@ -7,8 +7,8 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { completeProfileSchema, type CompleteProfileFormData } from '@/lib/validations/auth';
-import { createDonor } from '@/lib/db/donors';
-import type { BusinessType } from '@/types';
+import { createSupplier } from '@/lib/db/suppliers';
+import type { SupplierType } from '@/types';
 import {
   Button,
   Input,
@@ -25,12 +25,13 @@ import {
   SelectValue,
 } from '@/components/ui';
 
-const BUSINESS_TYPES: { value: BusinessType; label: string }[] = [
-  { value: 'restaurant', label: 'Restaurant' },
+const BUSINESS_TYPES: { value: SupplierType; label: string }[] = [
+  { value: 'distributor', label: 'Distributor' },
+  { value: 'wholesale', label: 'Wholesale' },
+  { value: 'farm', label: 'Farm' },
   { value: 'grocery', label: 'Grocery Store' },
-  { value: 'caterer', label: 'Caterer' },
-  { value: 'bakery', label: 'Bakery' },
-  { value: 'corporate', label: 'Corporate Cafeteria' },
+  { value: 'restaurant', label: 'Restaurant' },
+  { value: 'processor', label: 'Processor' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -44,7 +45,7 @@ const US_STATES = [
 
 export default function CompleteProfilePage() {
   const router = useRouter();
-  const { user, donor, loading, refreshDonor } = useAuth();
+  const { user, supplier, loading, refreshSupplier } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -71,8 +72,8 @@ export default function CompleteProfilePage() {
         return;
       }
 
-      if (donor) {
-        router.push('/donor/dashboard');
+      if (supplier) {
+        router.push('/supplier/dashboard');
         return;
       }
 
@@ -80,14 +81,14 @@ export default function CompleteProfilePage() {
         setValue('contactName', user.displayName);
       }
     }
-  }, [user, donor, loading, router, setValue]);
+  }, [user, supplier, loading, router, setValue]);
 
   const onSubmit = async (data: CompleteProfileFormData) => {
     if (!user) return;
 
     setIsSubmitting(true);
     try {
-      await createDonor(user.uid, {
+      await createSupplier(user.uid, {
         email: user.email || '',
         businessName: data.businessName,
         contactName: data.contactName,
@@ -101,11 +102,11 @@ export default function CompleteProfilePage() {
         businessType: data.businessType,
       });
 
-      await refreshDonor();
+      await refreshSupplier();
       toast.success('Profile completed! Welcome to MobilePantry.');
-      router.push('/donor/dashboard');
+      router.push('/supplier/dashboard');
     } catch (error) {
-      console.error('Error creating donor profile:', error);
+      console.error('Error creating supplier profile:', error);
       toast.error('Failed to create profile. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -120,7 +121,7 @@ export default function CompleteProfilePage() {
     );
   }
 
-  if (!user || donor) {
+  if (!user || supplier) {
     return null;
   }
 
@@ -140,7 +141,7 @@ export default function CompleteProfilePage() {
           <div>
             <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
             <CardDescription>
-              We need a few more details about your business
+              Complete your supplier profile to start submitting surplus alerts
             </CardDescription>
           </div>
         </CardHeader>
@@ -152,7 +153,7 @@ export default function CompleteProfilePage() {
                 <Label htmlFor="businessName">Business Name</Label>
                 <Input
                   id="businessName"
-                  placeholder="Your Business"
+                  placeholder="e.g., DNO Produce, Miller Farms"
                   {...register('businessName')}
                 />
                 {errors.businessName && (
@@ -242,7 +243,7 @@ export default function CompleteProfilePage() {
               <Label htmlFor="businessType">Business Type</Label>
               <Select
                 value={businessType}
-                onValueChange={(value) => setValue('businessType', value as BusinessType)}
+                onValueChange={(value) => setValue('businessType', value as SupplierType)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select business type" />
