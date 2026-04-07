@@ -16,7 +16,14 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout';
 import { getAlertsBySupplier } from '@/lib/db/surplus-alerts';
-import type { SurplusAlert, AlertStatus } from '@/types';
+import type { SurplusAlert, AlertStatus, PickupItem } from '@/types';
+
+function itemsSummary(items: PickupItem[] | undefined, fallback?: string): string {
+  if (items && items.length > 0) {
+    return items.map((item) => `${item.quantity}x ${item.name}`).join(', ');
+  }
+  return fallback || '';
+}
 import {
   Card,
   CardHeader,
@@ -141,11 +148,11 @@ export default function SupplierHistoryPage() {
       <Head>
         <title>Alert History | MobilePantry</title>
       </Head>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           <Link
             href="/supplier/dashboard"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-6"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Dashboard
@@ -153,10 +160,10 @@ export default function SupplierHistoryPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-foreground">
                 Alert History
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-muted-foreground mt-1">
                 All your surplus alerts in one place
               </p>
             </div>
@@ -169,7 +176,7 @@ export default function SupplierHistoryPage() {
                 <div className="flex items-center gap-3">
                   <Package className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-gray-500">Total Alerts</p>
+                    <p className="text-sm text-muted-foreground">Total Alerts</p>
                     <p className="text-xl font-bold">{alerts.length}</p>
                   </div>
                 </div>
@@ -180,7 +187,7 @@ export default function SupplierHistoryPage() {
                 <div className="flex items-center gap-3">
                   <Scale className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-gray-500">Total Lbs Rescued</p>
+                    <p className="text-sm text-muted-foreground">Total Lbs Rescued</p>
                     <p className="text-xl font-bold">
                       {totalPounds.toLocaleString()}
                     </p>
@@ -199,7 +206,7 @@ export default function SupplierHistoryPage() {
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   filter === tab.value
                     ? 'bg-primary text-white'
-                    : 'bg-white text-gray-600 border hover:bg-gray-50'
+                    : 'bg-background text-foreground/80 border hover:bg-muted/50'
                 }`}
               >
                 {tab.label}
@@ -212,8 +219,8 @@ export default function SupplierHistoryPage() {
             <CardContent className="pt-6">
               {filteredAlerts.length === 0 ? (
                 <div className="text-center py-12">
-                  <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">
+                  <Package className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
                     {filter === 'all'
                       ? 'No surplus alerts yet'
                       : `No ${filter} alerts`}
@@ -233,7 +240,7 @@ export default function SupplierHistoryPage() {
                   <div className="hidden sm:block">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b">
+                        <tr className="text-left text-sm text-muted-foreground border-b">
                           <th className="pb-3 font-medium">Date</th>
                           <th className="pb-3 font-medium">Produce</th>
                           <th className="pb-3 font-medium">Est. Weight</th>
@@ -248,7 +255,7 @@ export default function SupplierHistoryPage() {
                           return (
                             <tr
                               key={alert.id}
-                              className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
+                              className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
                               onClick={() =>
                                 router.push(`/supplier/alert/${alert.id}`)
                               }
@@ -257,7 +264,7 @@ export default function SupplierHistoryPage() {
                                 {formatDate(alert.createdAt)}
                               </td>
                               <td className="py-3 text-sm max-w-[200px] truncate">
-                                {alert.produceDescription}
+                                {itemsSummary(alert.items, alert.produceDescription)}
                               </td>
                               <td className="py-3 text-sm">
                                 {alert.estimatedWeightLbs} lbs
@@ -273,7 +280,7 @@ export default function SupplierHistoryPage() {
                                 </Badge>
                               </td>
                               <td className="py-3">
-                                <ArrowRight className="h-4 w-4 text-gray-400" />
+                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
                               </td>
                             </tr>
                           );
@@ -292,19 +299,19 @@ export default function SupplierHistoryPage() {
                           href={`/supplier/alert/${alert.id}`}
                           className="block"
                         >
-                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-muted-foreground">
                                 {formatDate(alert.createdAt)}
                               </span>
                               <Badge className={config.color}>
                                 {config.label}
                               </Badge>
                             </div>
-                            <p className="text-sm text-gray-700 truncate">
-                              {alert.produceDescription}
+                            <p className="text-sm text-foreground/80 truncate">
+                              {itemsSummary(alert.items, alert.produceDescription)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               Est: {alert.estimatedWeightLbs} lbs
                               {alert.actualWeightLbs &&
                                 ` · Actual: ${alert.actualWeightLbs} lbs`}

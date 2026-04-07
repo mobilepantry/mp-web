@@ -1,7 +1,27 @@
 import { z } from 'zod';
 
+const pickupItemSchema = z.object({
+  name: z.string().min(1, 'Item name is required'),
+  quantity: z
+    .string()
+    .min(1, 'Quantity is required')
+    .refine((val) => !isNaN(Number(val)) && Number(val) >= 1, {
+      message: 'Quantity must be at least 1',
+    })
+    .transform((val) => Number(val)),
+  estimatedPrice: z
+    .string()
+    .optional()
+    .transform((val) => (val && val !== '' ? Number(val) : undefined))
+    .refine((val) => val === undefined || (!isNaN(val) && val >= 0), {
+      message: 'Price must be a non-negative number',
+    }),
+});
+
 export const surplusAlertSchema = z.object({
-  produceDescription: z.string().min(1, 'Please describe the available produce'),
+  items: z
+    .array(pickupItemSchema)
+    .min(1, 'Add at least one item'),
   produceCategory: z
     .array(
       z.enum([
@@ -22,13 +42,6 @@ export const surplusAlertSchema = z.object({
       message: 'Weight must be at least 1 lb',
     })
     .transform((val) => Number(val)),
-  estimatedCaseCount: z
-    .string()
-    .optional()
-    .transform((val) => (val ? Number(val) : undefined))
-    .refine((val) => val === undefined || (!isNaN(val) && val >= 1), {
-      message: 'Case count must be at least 1',
-    }),
   produceGrade: z.enum(['A', 'B', 'C']).optional(),
   alertType: z.enum(['ad-hoc', 'standing']),
   useBusinessAddress: z.boolean(),

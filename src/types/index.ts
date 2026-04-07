@@ -30,6 +30,14 @@ export interface Supplier {
   updatedAt: Timestamp;
 }
 
+// --- Pickup Item ---
+
+export interface PickupItem {
+  name: string;
+  quantity: number;
+  estimatedPrice?: number;
+}
+
 // --- Surplus Alert (was PickupRequest) ---
 
 export type AlertStatus = 'pending' | 'confirmed' | 'picked-up' | 'completed' | 'cancelled';
@@ -49,9 +57,13 @@ export interface SurplusAlert {
   id: string;
   supplierId: string;
   status: AlertStatus;
-  produceDescription: string;
+  /** Items in this pickup (replaces produceDescription) */
+  items: PickupItem[];
+  /** @deprecated Kept for backward compat with old Firestore documents */
+  produceDescription?: string;
   produceCategory: ProduceCategory[];
   estimatedWeightLbs: number;
+  /** @deprecated Captured per-item via items[].quantity */
   estimatedCaseCount?: number;
   produceGrade?: ProduceGrade;
   pickupAddress: Address;

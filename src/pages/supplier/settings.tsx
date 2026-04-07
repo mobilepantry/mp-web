@@ -222,17 +222,17 @@ export default function SupplierSettingsPage() {
       <Head>
         <title>Settings | MobilePantry</title>
       </Head>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-2xl">
           <Link
             href="/supplier/dashboard"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-primary mb-6"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Dashboard
           </Link>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-8">Supplier Settings</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-8">Supplier Settings</h1>
 
           {/* Supplier Profile */}
           <Card className="mb-6">
@@ -428,9 +428,9 @@ export default function SupplierSettingsPage() {
               {/* Email Display */}
               <div className="space-y-2">
                 <Label>Email</Label>
-                <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-md">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{user.email}</span>
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground/80">{user.email}</span>
                 </div>
               </div>
 
@@ -450,7 +450,7 @@ export default function SupplierSettingsPage() {
                   onSubmit={handlePasswordSubmit(onChangePassword)}
                   className="space-y-4 border-t pt-6"
                 >
-                  <h3 className="font-medium text-gray-900">Change Password</h3>
+                  <h3 className="font-medium text-foreground">Change Password</h3>
 
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">Current Password</Label>

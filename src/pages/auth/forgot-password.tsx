@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
@@ -76,10 +76,10 @@ export default function ForgotPasswordPage() {
                 <CheckCircle className="h-16 w-16 text-green-500" />
               </div>
               <div className="space-y-2">
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   We&apos;ve sent a password reset link to your email address.
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Didn&apos;t receive it? Check your spam folder or try again.
                 </p>
               </div>

@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer className="w-full bg-white border-t-4 border-primary">
+    <footer className="w-full bg-background border-t-4 border-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Social Icons */}
@@ -35,7 +35,7 @@ export function Footer() {
             >
               mobilepantry.org
             </a>
-            <span className="text-gray-300">|</span>
+            <span className="text-muted-foreground">|</span>
             <a
               href="https://shop.mobilepantry.org"
               target="_blank"
@@ -48,7 +48,7 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
+        <div className="mt-8 pt-6 border-t border-border text-center text-sm text-muted-foreground">
           <p>&copy; 2026 MobilePantry &middot; Driving to End Hunger</p>
         </div>
       </div>

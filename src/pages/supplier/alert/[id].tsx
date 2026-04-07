@@ -199,13 +199,13 @@ export default function SupplierAlertDetailPage() {
   if (error) {
     return (
       <Layout>
-        <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+        <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
           <div className="container mx-auto px-4 max-w-2xl">
             <Card>
               <CardContent className="py-12 text-center">
                 <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Error</h2>
-                <p className="text-gray-600 mb-4">{error}</p>
+                <p className="text-muted-foreground mb-4">{error}</p>
                 <Link
                   href="/supplier/dashboard"
                   className="text-primary hover:underline"
@@ -242,7 +242,7 @@ export default function SupplierAlertDetailPage() {
       <Head>
         <title>Alert Details | MobilePantry</title>
       </Head>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-2xl">
           <Link
             href="/supplier/dashboard"
@@ -265,7 +265,7 @@ export default function SupplierAlertDetailPage() {
                 </div>
                 <div>
                   <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
-                  <p className="text-gray-700 mt-1">{statusMessage}</p>
+                  <p className="text-foreground/80 mt-1">{statusMessage}</p>
                 </div>
               </div>
             </CardContent>
@@ -280,21 +280,44 @@ export default function SupplierAlertDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Produce Description */}
+              {/* Items */}
               <div className="flex gap-4">
-                <FileText className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-gray-500">Produce Description</p>
-                  <p className="font-medium">{alert.produceDescription}</p>
+                <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <div className="w-full">
+                  <p className="text-sm text-muted-foreground mb-2">Items</p>
+                  {alert.items && alert.items.length > 0 ? (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-muted-foreground border-b">
+                          <th className="pb-1 font-normal">Qty</th>
+                          <th className="pb-1 font-normal">Item</th>
+                          <th className="pb-1 font-normal text-right">Est. Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {alert.items.map((item, i) => (
+                          <tr key={i} className="border-b last:border-0">
+                            <td className="py-1.5 pr-3 font-medium">{item.quantity}x</td>
+                            <td className="py-1.5">{item.name}</td>
+                            <td className="py-1.5 text-right text-muted-foreground">
+                              {item.estimatedPrice != null ? `$${item.estimatedPrice.toFixed(2)}` : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p className="font-medium">{alert.produceDescription}</p>
+                  )}
                 </div>
               </div>
 
               {/* Produce Categories */}
               {alert.produceCategory && alert.produceCategory.length > 0 && (
                 <div className="flex gap-4">
-                  <Tag className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <Tag className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Categories</p>
+                    <p className="text-sm text-muted-foreground">Categories</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {alert.produceCategory.map((cat) => (
                         <Badge
@@ -311,9 +334,9 @@ export default function SupplierAlertDetailPage() {
 
               {/* Estimated Weight / Actual Weight */}
               <div className="flex gap-4">
-                <Scale className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <Scale className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Estimated Weight</p>
+                  <p className="text-sm text-muted-foreground">Estimated Weight</p>
                   <p className="font-medium">{alert.estimatedWeightLbs} lbs</p>
                   {alert.actualWeightLbs && (
                     <p className="text-sm text-green-600">
@@ -326,9 +349,9 @@ export default function SupplierAlertDetailPage() {
               {/* Case Count */}
               {alert.estimatedCaseCount && (
                 <div className="flex gap-4">
-                  <Layers className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <Layers className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Estimated Case Count</p>
+                    <p className="text-sm text-muted-foreground">Estimated Case Count</p>
                     <p className="font-medium">{alert.estimatedCaseCount} cases</p>
                   </div>
                 </div>
@@ -337,9 +360,9 @@ export default function SupplierAlertDetailPage() {
               {/* Produce Grade */}
               {(alert.produceGrade || alert.actualGrade) && (
                 <div className="flex gap-4">
-                  <Tag className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <Tag className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Produce Grade</p>
+                    <p className="text-sm text-muted-foreground">Produce Grade</p>
                     {alert.produceGrade && (
                       <p className="font-medium">
                         Estimated: {getGradeLabel(alert.produceGrade)}
@@ -356,14 +379,14 @@ export default function SupplierAlertDetailPage() {
 
               {/* Alert Type */}
               <div className="flex gap-4">
-                <Clock className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Alert Type</p>
+                  <p className="text-sm text-muted-foreground">Alert Type</p>
                   <Badge
                     className={
                       alert.alertType === 'standing'
                         ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : 'bg-gray-100 text-gray-700 border-gray-200'
+                        : 'bg-muted text-foreground/80 border-border'
                     }
                   >
                     {alert.alertType === 'standing' ? 'Standing Weekly Shipment' : 'Ad-hoc (One-time)'}
@@ -373,9 +396,9 @@ export default function SupplierAlertDetailPage() {
 
               {/* Pickup Address */}
               <div className="flex gap-4">
-                <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Ship From Address</p>
+                  <p className="text-sm text-muted-foreground">Ship From Address</p>
                   <p className="font-medium">
                     {alert.pickupAddress.street}
                     <br />
@@ -397,9 +420,9 @@ export default function SupplierAlertDetailPage() {
 
               {/* Pickup Date & Time */}
               <div className="flex gap-4">
-                <Calendar className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <Calendar className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Shipment Date & Time</p>
+                  <p className="text-sm text-muted-foreground">Shipment Date & Time</p>
                   <p className="font-medium">
                     {formatDate(alert.pickupDate)}
                     <br />
@@ -410,9 +433,9 @@ export default function SupplierAlertDetailPage() {
 
               {/* Contact on Arrival */}
               <div className="flex gap-4">
-                <Phone className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <Phone className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-500">Shipping Contact</p>
+                  <p className="text-sm text-muted-foreground">Shipping Contact</p>
                   <p className="font-medium">{alert.contactOnArrival}</p>
                 </div>
               </div>
@@ -420,9 +443,9 @@ export default function SupplierAlertDetailPage() {
               {/* Special Instructions */}
               {alert.specialInstructions && (
                 <div className="flex gap-4">
-                  <FileText className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-500">Special Instructions</p>
+                    <p className="text-sm text-muted-foreground">Special Instructions</p>
                     <p className="font-medium">{alert.specialInstructions}</p>
                   </div>
                 </div>
@@ -430,16 +453,16 @@ export default function SupplierAlertDetailPage() {
 
               {/* Timestamps */}
               <div className="border-t pt-4 mt-6">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Submitted: {formatDateTime(alert.createdAt)}
                 </p>
                 {alert.confirmedAt && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Confirmed: {formatDateTime(alert.confirmedAt)}
                   </p>
                 )}
                 {alert.completedAt && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Completed: {formatDateTime(alert.completedAt)}
                   </p>
                 )}

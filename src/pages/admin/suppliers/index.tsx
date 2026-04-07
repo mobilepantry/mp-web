@@ -149,7 +149,7 @@ export default function AdminSuppliersPage() {
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           {/* Back */}
           <div className="mb-6">
@@ -162,14 +162,14 @@ export default function AdminSuppliersPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Suppliers</h1>
-            <p className="text-sm text-gray-500">{filteredSuppliers.length} suppliers</p>
+            <h1 className="text-2xl font-bold text-foreground">Suppliers</h1>
+            <p className="text-sm text-muted-foreground">{filteredSuppliers.length} suppliers</p>
           </div>
 
           {/* Search and Sort */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by business, contact, or email..."
                 value={searchQuery}
@@ -207,8 +207,8 @@ export default function AdminSuppliersPage() {
             <CardContent className="p-0">
               {paginatedSuppliers.length === 0 ? (
                 <div className="text-center py-12">
-                  <Users className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">
+                  <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
                     {searchQuery ? 'No suppliers match your search' : 'No suppliers yet'}
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export default function AdminSuppliersPage() {
                   <div className="hidden md:block">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b">
+                        <tr className="text-left text-sm text-muted-foreground border-b">
                           <th className="px-6 py-3 font-medium">Business</th>
                           <th className="px-6 py-3 font-medium">Contact</th>
                           <th className="px-6 py-3 font-medium">Email</th>
@@ -233,14 +233,14 @@ export default function AdminSuppliersPage() {
                         {paginatedSuppliers.map((supplier) => (
                           <tr
                             key={supplier.id}
-                            className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
+                            className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
                             onClick={() => router.push(`/admin/suppliers/${supplier.id}`)}
                           >
                             <td className="px-6 py-4 text-sm font-medium">
                               {supplier.businessName}
                             </td>
                             <td className="px-6 py-4 text-sm">{supplier.contactName}</td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-muted-foreground">
                               {supplier.email}
                             </td>
                             <td className="px-6 py-4 text-sm">{supplier.phone}</td>
@@ -252,13 +252,13 @@ export default function AdminSuppliersPage() {
                             <td className="px-6 py-4 text-sm">
                               {supplier.alertCount}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-muted-foreground">
                               {supplier.lastActivityDate
                                 ? formatDate(supplier.lastActivityDate)
                                 : '\u2014'}
                             </td>
                             <td className="px-6 py-4">
-                              <ArrowRight className="h-4 w-4 text-gray-400" />
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
                             </td>
                           </tr>
                         ))}
@@ -274,15 +274,15 @@ export default function AdminSuppliersPage() {
                         href={`/admin/suppliers/${supplier.id}`}
                         className="block"
                       >
-                        <div className="p-4 hover:bg-gray-50 transition-colors">
+                        <div className="p-4 hover:bg-muted/50 transition-colors">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-gray-900">
+                            <span className="text-sm font-medium text-foreground">
                               {supplier.businessName}
                             </span>
-                            <ArrowRight className="h-4 w-4 text-gray-400" />
+                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <p className="text-sm text-gray-600">{supplier.contactName}</p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-sm text-muted-foreground">{supplier.contactName}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
                             {supplier.totalLbsRescued > 0
                               ? `${supplier.totalLbsRescued.toLocaleString()} lbs rescued`
                               : 'No rescues yet'}
@@ -310,7 +310,7 @@ export default function AdminSuppliersPage() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 Page {page + 1} of {totalPages}
               </span>
               <Button

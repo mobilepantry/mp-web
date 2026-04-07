@@ -9,7 +9,7 @@ interface UseRequireAuthOptions {
 
 export function useRequireAuth(options: UseRequireAuthOptions = {}) {
   const { redirectTo = '/auth/login', requireSupplierProfile = true } = options;
-  const { user, supplier, loading } = useAuth();
+  const { user, supplier, loading, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -20,10 +20,10 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
       return;
     }
 
-    if (requireSupplierProfile && !supplier) {
+    if (requireSupplierProfile && !supplier && !isAdmin) {
       router.push('/auth/complete-profile');
     }
-  }, [user, supplier, loading, router, redirectTo, requireSupplierProfile]);
+  }, [user, supplier, loading, isAdmin, router, redirectTo, requireSupplierProfile]);
 
-  return { user, supplier, loading, isAuthenticated: !!user };
+  return { user, supplier, loading, isAdmin, isAuthenticated: !!user };
 }

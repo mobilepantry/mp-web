@@ -45,7 +45,7 @@ const US_STATES = [
 
 export default function CompleteProfilePage() {
   const router = useRouter();
-  const { user, supplier, loading, refreshSupplier } = useAuth();
+  const { user, supplier, loading, isAdmin, refreshSupplier } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -72,6 +72,11 @@ export default function CompleteProfilePage() {
         return;
       }
 
+      if (isAdmin) {
+        router.push('/admin');
+        return;
+      }
+
       if (supplier) {
         router.push('/supplier/dashboard');
         return;
@@ -81,7 +86,7 @@ export default function CompleteProfilePage() {
         setValue('contactName', user.displayName);
       }
     }
-  }, [user, supplier, loading, router, setValue]);
+  }, [user, supplier, loading, isAdmin, router, setValue]);
 
   const onSubmit = async (data: CompleteProfileFormData) => {
     if (!user) return;
@@ -121,12 +126,12 @@ export default function CompleteProfilePage() {
     );
   }
 
-  if (!user || supplier) {
+  if (!user || supplier || isAdmin) {
     return null;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">

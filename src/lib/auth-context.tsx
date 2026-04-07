@@ -26,10 +26,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   refreshSupplier: () => Promise<void>;
-  /** @deprecated Use supplier */
-  donor: Supplier | null;
-  /** @deprecated Use refreshSupplier */
-  refreshDonor: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,7 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     user,
     supplier,
-    donor: supplier,
     loading,
     isAdmin,
     signUp,
@@ -113,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     resetPassword,
     refreshSupplier,
-    refreshDonor: refreshSupplier,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

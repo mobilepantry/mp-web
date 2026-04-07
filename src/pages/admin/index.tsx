@@ -24,7 +24,14 @@ import {
   getAlertCountByStatus,
 } from '@/lib/db/stats';
 import { getAllSuppliers } from '@/lib/db/suppliers';
-import type { SurplusAlert, AlertStatus, Supplier } from '@/types';
+import type { SurplusAlert, AlertStatus, Supplier, PickupItem } from '@/types';
+
+function itemsSummary(items: PickupItem[] | undefined, fallback?: string): string {
+  if (items && items.length > 0) {
+    return items.map((item) => `${item.quantity}x ${item.name}`).join(', ');
+  }
+  return fallback || '';
+}
 import {
   Button,
   Card,
@@ -188,13 +195,13 @@ export default function AdminDashboardPage() {
       <Head>
         <title>Ops Dashboard | MobilePantry</title>
       </Head>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
                 Manage surplus alerts and supplier relationships
               </p>
             </div>
@@ -222,8 +229,8 @@ export default function AdminDashboardPage() {
                       <Clock className="h-6 w-6 text-yellow-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Pending Alerts</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-sm text-muted-foreground">Pending Alerts</p>
+                      <p className="text-2xl font-bold text-foreground">
                         {pendingCount}
                       </p>
                     </div>
@@ -239,8 +246,8 @@ export default function AdminDashboardPage() {
                     <Scale className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Lbs Rescued This Week</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm text-muted-foreground">Lbs Rescued This Week</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {weeklyPounds.toLocaleString()}
                     </p>
                   </div>
@@ -256,8 +263,8 @@ export default function AdminDashboardPage() {
                       <Users className="h-6 w-6 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Active Suppliers</p>
-                      <p className="text-2xl font-bold text-gray-900">{suppliersCount}</p>
+                      <p className="text-sm text-muted-foreground">Active Suppliers</p>
+                      <p className="text-2xl font-bold text-foreground">{suppliersCount}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -267,12 +274,12 @@ export default function AdminDashboardPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-lg ${avgTemp !== null ? getTempBgColor(avgTemp) : 'bg-gray-100'}`}>
-                    <Thermometer className={`h-6 w-6 ${avgTemp !== null ? getTempColor(avgTemp) : 'text-gray-600'}`} />
+                  <div className={`p-3 rounded-lg ${avgTemp !== null ? getTempBgColor(avgTemp) : 'bg-muted'}`}>
+                    <Thermometer className={`h-6 w-6 ${avgTemp !== null ? getTempColor(avgTemp) : 'text-muted-foreground'}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Avg Pickup Temp</p>
-                    <p className={`text-2xl font-bold ${avgTemp !== null ? getTempColor(avgTemp) : 'text-gray-900'}`}>
+                    <p className="text-sm text-muted-foreground">Avg Pickup Temp</p>
+                    <p className={`text-2xl font-bold ${avgTemp !== null ? getTempColor(avgTemp) : 'text-foreground'}`}>
                       {avgTemp !== null ? `${avgTemp.toFixed(1)}\u00B0F` : '\u2014'}
                     </p>
                   </div>
@@ -301,7 +308,7 @@ export default function AdminDashboardPage() {
               {pendingAlerts.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle2 className="h-10 w-10 text-green-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No pending alerts — all caught up!</p>
+                  <p className="text-muted-foreground">No pending alerts — all caught up!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -313,33 +320,33 @@ export default function AdminDashboardPage() {
                         href={`/admin/requests/${alert.id}`}
                         className="block"
                       >
-                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
                                 Pending
                               </Badge>
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-foreground">
                                 {supplier?.businessName || 'Unknown Supplier'}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700 truncate">
-                              {alert.produceDescription}
+                            <p className="text-sm text-foreground/80 truncate">
+                              {itemsSummary(alert.items, alert.produceDescription)}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               {alert.produceCategory?.map((cat) => (
-                                <Badge key={cat} className="bg-gray-100 text-gray-600 border-gray-200 text-xs">
+                                <Badge key={cat} className="bg-muted text-muted-foreground border-border text-xs">
                                   {cat}
                                 </Badge>
                               ))}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {formatDate(alert.pickupDate)} &middot;{' '}
                               {formatTimeWindow(alert.pickupTimeWindow)} &middot;{' '}
                               ~{alert.estimatedWeightLbs} lbs
                             </p>
                           </div>
-                          <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-4" />
+                          <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4" />
                         </div>
                       </Link>
                     );
@@ -368,8 +375,8 @@ export default function AdminDashboardPage() {
             <CardContent>
               {recentCompleted.length === 0 ? (
                 <div className="text-center py-8">
-                  <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No completed pickups yet</p>
+                  <Package className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No completed pickups yet</p>
                 </div>
               ) : (
                 <>
@@ -377,7 +384,7 @@ export default function AdminDashboardPage() {
                   <div className="hidden sm:block">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b">
+                        <tr className="text-left text-sm text-muted-foreground border-b">
                           <th className="pb-3 font-medium">Date</th>
                           <th className="pb-3 font-medium">Supplier</th>
                           <th className="pb-3 font-medium">Produce</th>
@@ -392,17 +399,17 @@ export default function AdminDashboardPage() {
                           return (
                             <tr
                               key={alert.id}
-                              className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
+                              className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
                               onClick={() => router.push(`/admin/requests/${alert.id}`)}
                             >
                               <td className="py-3 text-sm">
                                 {formatDate(alert.createdAt)}
                               </td>
-                              <td className="py-3 text-sm font-medium">
+                              <td className="py-3 text-sm font-medium text-foreground">
                                 {supplier?.businessName || 'Unknown'}
                               </td>
-                              <td className="py-3 text-sm max-w-[200px] truncate">
-                                {alert.produceDescription}
+                              <td className="py-3 text-sm max-w-[200px] truncate text-foreground/80">
+                                {itemsSummary(alert.items, alert.produceDescription)}
                               </td>
                               <td className="py-3 text-sm">
                                 {weight} lbs
@@ -434,19 +441,19 @@ export default function AdminDashboardPage() {
                           href={`/admin/requests/${alert.id}`}
                           className="block"
                         >
-                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-foreground">
                                 {supplier?.businessName || 'Unknown'}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground">
                                 {formatDate(alert.createdAt)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700 truncate">
-                              {alert.produceDescription}
+                            <p className="text-sm text-foreground/80 truncate">
+                              {itemsSummary(alert.items, alert.produceDescription)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {weight} lbs
                               {alert.temperatureAtPickup != null && (
                                 <span className={`ml-2 ${getTempColor(alert.temperatureAtPickup)}`}>
