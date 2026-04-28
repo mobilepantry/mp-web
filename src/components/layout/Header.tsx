@@ -56,6 +56,9 @@ export function Header() {
                 <Link href="/supplier/history" className="text-foreground/80 hover:text-primary transition-colors font-medium">
                   History
                 </Link>
+                <Link href="/donate" className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  Donate
+                </Link>
               </>
             )}
 
@@ -172,6 +175,13 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     History
+                  </Link>
+                  <Link
+                    href="/donate"
+                    className="px-2 py-2 text-foreground/80 hover:text-primary transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Donate
                   </Link>
                 </>
               )}
