@@ -99,7 +99,11 @@ export async function sendSurplusAlertNotification(
         fields: [
           {
             type: 'mrkdwn',
-            text: `:seedling: *Produce*\n${alert.produceDescription}`,
+            text: `:seedling: *Items*\n${
+              alert.items && alert.items.length > 0
+                ? alert.items.map((item) => `${item.quantity}x ${item.name}${item.estimatedPrice != null ? ` (~$${item.estimatedPrice})` : ''}`).join('\n')
+                : (alert.produceDescription || '—')
+            }`,
           },
           {
             type: 'mrkdwn',

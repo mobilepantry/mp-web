@@ -14,7 +14,14 @@ import { useRequireAdmin } from '@/hooks/useRequireAdmin';
 import { Layout } from '@/components/layout';
 import { getAllSurplusAlerts } from '@/lib/db/surplus-alerts';
 import { getAllSuppliers } from '@/lib/db/suppliers';
-import type { SurplusAlert, AlertStatus, Supplier } from '@/types';
+import type { SurplusAlert, AlertStatus, Supplier, PickupItem } from '@/types';
+
+function itemsSummary(items: PickupItem[] | undefined, fallback?: string): string {
+  if (items && items.length > 0) {
+    return items.map((item) => `${item.quantity}x ${item.name}`).join(', ');
+  }
+  return fallback || '';
+}
 import {
   Button,
   Card,
@@ -167,7 +174,7 @@ export default function AdminRequestsListPage() {
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
@@ -180,8 +187,8 @@ export default function AdminRequestsListPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Surplus Alerts</h1>
-            <p className="text-sm text-gray-500">{filteredAlerts.length} alerts</p>
+            <h1 className="text-2xl font-bold text-foreground">Surplus Alerts</h1>
+            <p className="text-sm text-muted-foreground">{filteredAlerts.length} alerts</p>
           </div>
 
           {/* Status Filter Tabs */}
@@ -209,8 +216,8 @@ export default function AdminRequestsListPage() {
             <CardContent className="p-0">
               {paginatedAlerts.length === 0 ? (
                 <div className="text-center py-12">
-                  <Clock className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No alerts found</p>
+                  <Clock className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No alerts found</p>
                 </div>
               ) : (
                 <>
@@ -218,7 +225,7 @@ export default function AdminRequestsListPage() {
                   <div className="hidden md:block">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b">
+                        <tr className="text-left text-sm text-muted-foreground border-b">
                           <th className="px-6 py-3 font-medium">Date</th>
                           <th className="px-6 py-3 font-medium">Supplier</th>
                           <th className="px-6 py-3 font-medium">Produce</th>
@@ -235,7 +242,7 @@ export default function AdminRequestsListPage() {
                           return (
                             <tr
                               key={alert.id}
-                              className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
+                              className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
                               onClick={() =>
                                 router.push(`/admin/requests/${alert.id}`)
                               }
@@ -247,7 +254,7 @@ export default function AdminRequestsListPage() {
                                 {supplier?.businessName || 'Unknown'}
                               </td>
                               <td className="px-6 py-4 text-sm max-w-[200px] truncate">
-                                {alert.produceDescription}
+                                {itemsSummary(alert.items, alert.produceDescription)}
                               </td>
                               <td className="px-6 py-4 text-sm">
                                 {alert.estimatedWeightLbs} lbs
@@ -261,7 +268,7 @@ export default function AdminRequestsListPage() {
                                 <Badge className={config.color}>{config.label}</Badge>
                               </td>
                               <td className="px-6 py-4">
-                                <ArrowRight className="h-4 w-4 text-gray-400" />
+                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
                               </td>
                             </tr>
                           );
@@ -281,17 +288,17 @@ export default function AdminRequestsListPage() {
                           href={`/admin/requests/${alert.id}`}
                           className="block"
                         >
-                          <div className="p-4 hover:bg-gray-50 transition-colors">
+                          <div className="p-4 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-foreground">
                                 {supplier?.businessName || 'Unknown'}
                               </span>
                               <Badge className={config.color}>{config.label}</Badge>
                             </div>
-                            <p className="text-sm text-gray-700 truncate mb-1">
-                              {alert.produceDescription}
+                            <p className="text-sm text-foreground/80 truncate mb-1">
+                              {itemsSummary(alert.items, alert.produceDescription)}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               {formatDate(alert.pickupDate)} &middot;{' '}
                               {formatTimeWindow(alert.pickupTimeWindow)} &middot;{' '}
                               ~{alert.estimatedWeightLbs} lbs
@@ -320,7 +327,7 @@ export default function AdminRequestsListPage() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 Page {page + 1} of {totalPages}
               </span>
               <Button

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Loader2, Leaf, ArrowLeft } from 'lucide-react';
+import { Loader2, Leaf, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout';
@@ -75,10 +75,12 @@ export default function SurplusAlertPage() {
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<SurplusAlertFormInput, unknown, SurplusAlertFormData>({
     resolver: zodResolver(surplusAlertSchema),
     defaultValues: {
+      items: [{ name: '', quantity: '', estimatedPrice: '' }],
       useBusinessAddress: true,
       pickupDate: getTodayString(),
       state: 'OH',
@@ -86,6 +88,11 @@ export default function SurplusAlertPage() {
       alertType: 'ad-hoc' as const,
       estimatedWeightLbs: '',
     },
+  });
+
+  const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
+    control,
+    name: 'items',
   });
 
   const useBusinessAddress = watch('useBusinessAddress');
@@ -150,10 +157,9 @@ export default function SurplusAlertPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           supplierId: user.uid,
-          produceDescription: data.produceDescription,
+          items: data.items,
           produceCategory: data.produceCategory,
           estimatedWeightLbs: data.estimatedWeightLbs,
-          estimatedCaseCount: data.estimatedCaseCount || undefined,
           produceGrade: data.produceGrade || undefined,
           alertType: data.alertType,
           pickupAddress: {
@@ -201,8 +207,8 @@ export default function SurplusAlertPage() {
       <Head>
         <title>Submit Surplus Alert | MobilePantry</title>
       </Head>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
-        <div className="container mx-auto px-4 max-w-2xl">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
+        <div className="container mx-auto px-4 max-w-3xl">
           <Link
             href="/supplier/dashboard"
             className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6"
@@ -228,20 +234,74 @@ export default function SurplusAlertPage() {
 
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Produce Description */}
-                <div className="space-y-2">
-                  <Label htmlFor="produceDescription">
-                    What produce is available? <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
-                    id="produceDescription"
-                    placeholder="e.g., 20 cases mixed stone fruit, 10 cases romaine lettuce — cosmetic only"
-                    rows={3}
-                    {...register('produceDescription')}
-                  />
-                  {errors.produceDescription && (
-                    <p className="text-sm text-red-500">{errors.produceDescription.message}</p>
+                {/* Pickup Items */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>
+                      Items in this pickup <span className="text-red-500">*</span>
+                    </Label>
+                  </div>
+                  {itemFields.map((field, index) => (
+                    <div key={field.id} className="flex gap-2 items-start">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="sm:col-span-1 space-y-1">
+                          <Input
+                            placeholder="Qty (e.g. 20)"
+                            type="number"
+                            min="1"
+                            {...register(`items.${index}.quantity`)}
+                          />
+                          {errors.items?.[index]?.quantity && (
+                            <p className="text-xs text-red-500">{errors.items[index]!.quantity!.message}</p>
+                          )}
+                        </div>
+                        <div className="sm:col-span-1 space-y-1">
+                          <Input
+                            placeholder="Item name (e.g. shaved tomatoes)"
+                            {...register(`items.${index}.name`)}
+                          />
+                          {errors.items?.[index]?.name && (
+                            <p className="text-xs text-red-500">{errors.items[index]!.name!.message}</p>
+                          )}
+                        </div>
+                        <div className="sm:col-span-1 space-y-1">
+                          <Input
+                            placeholder="Est. price $ (optional)"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            {...register(`items.${index}.estimatedPrice`)}
+                          />
+                          {errors.items?.[index]?.estimatedPrice && (
+                            <p className="text-xs text-red-500">{errors.items[index]!.estimatedPrice!.message}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:text-red-500 mt-0.5 flex-shrink-0"
+                        onClick={() => removeItem(index)}
+                        disabled={itemFields.length === 1}
+                        aria-label="Remove item"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {errors.items && !Array.isArray(errors.items) && (
+                    <p className="text-sm text-red-500">{(errors.items as { message?: string }).message}</p>
                   )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendItem({ name: '', quantity: '', estimatedPrice: '' })}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add another item
+                  </Button>
                 </div>
 
                 {/* Produce Category (multi-select checkboxes) */}
@@ -256,12 +316,12 @@ export default function SurplusAlertPage() {
                         className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
                           (produceCategory as string[]).includes(cat.value)
                             ? 'border-primary bg-primary/5'
-                            : 'border-gray-200 hover:bg-gray-50'
+                            : 'border-border hover:bg-muted/50'
                         }`}
                       >
                         <input
                           type="checkbox"
-                          className="rounded border-gray-300 text-primary focus:ring-primary"
+                          className="rounded border-input text-primary focus:ring-primary"
                           checked={(produceCategory as string[]).includes(cat.value)}
                           onChange={() => handleCategoryToggle(cat.value)}
                         />
@@ -291,27 +351,10 @@ export default function SurplusAlertPage() {
                   )}
                 </div>
 
-                {/* Estimated Case Count */}
-                <div className="space-y-2">
-                  <Label htmlFor="estimatedCaseCount">
-                    Estimated case count <span className="text-gray-400">(optional)</span>
-                  </Label>
-                  <Input
-                    id="estimatedCaseCount"
-                    type="number"
-                    min="1"
-                    placeholder="30"
-                    {...register('estimatedCaseCount')}
-                  />
-                  {errors.estimatedCaseCount && (
-                    <p className="text-sm text-red-500">{errors.estimatedCaseCount.message}</p>
-                  )}
-                </div>
-
                 {/* Produce Grade */}
                 <div className="space-y-2">
                   <Label>
-                    Produce grade <span className="text-gray-400">(optional)</span>
+                    Produce grade <span className="text-muted-foreground">(optional)</span>
                   </Label>
                   <Select
                     value={produceGrade}
@@ -338,7 +381,7 @@ export default function SurplusAlertPage() {
                     Alert type <span className="text-red-500">*</span>
                   </Label>
                   <div className="space-y-2">
-                    <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
                       <input
                         type="radio"
                         className="text-primary focus:ring-primary"
@@ -350,7 +393,7 @@ export default function SurplusAlertPage() {
                         <span className="text-sm font-medium">One-time surplus (ad-hoc)</span>
                       </div>
                     </label>
-                    <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
                       <input
                         type="radio"
                         className="text-primary focus:ring-primary"
@@ -360,7 +403,7 @@ export default function SurplusAlertPage() {
                       />
                       <div>
                         <span className="text-sm font-medium">Standing weekly pickup</span>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           We&apos;ll pick up at the same time every week
                         </p>
                       </div>
@@ -377,7 +420,7 @@ export default function SurplusAlertPage() {
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
-                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                        className="rounded border-input text-primary focus:ring-primary"
                         {...register('useBusinessAddress')}
                       />
                       Use my business address
@@ -510,7 +553,7 @@ export default function SurplusAlertPage() {
                 {/* Special Instructions */}
                 <div className="space-y-2">
                   <Label htmlFor="specialInstructions">
-                    Special Instructions <span className="text-gray-400">(optional)</span>
+                    Special Instructions <span className="text-muted-foreground">(optional)</span>
                   </Label>
                   <Textarea
                     id="specialInstructions"

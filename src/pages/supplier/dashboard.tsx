@@ -18,7 +18,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout';
 import { getAlertsBySupplier } from '@/lib/db/surplus-alerts';
 import { getSupplierStats } from '@/lib/db/stats';
-import type { SurplusAlert, AlertStatus } from '@/types';
+import type { SurplusAlert, AlertStatus, PickupItem } from '@/types';
+
+function itemsSummary(items: PickupItem[] | undefined, fallback?: string): string {
+  if (items && items.length > 0) {
+    return items.map((item) => `${item.quantity}x ${item.name}`).join(', ');
+  }
+  return fallback || '';
+}
 import {
   Button,
   Card,
@@ -149,15 +156,15 @@ export default function SupplierDashboardPage() {
       <Head>
         <title>Dashboard | MobilePantry</title>
       </Head>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Welcome Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-foreground">
                 Welcome back, {supplier.businessName}
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-muted-foreground mt-1">
                 Thank you for helping rescue produce in Columbus!
               </p>
             </div>
@@ -178,8 +185,8 @@ export default function SupplierDashboardPage() {
                     <Scale className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Pounds Rescued</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm text-muted-foreground">Pounds Rescued</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {stats.totalPounds.toLocaleString()}
                     </p>
                   </div>
@@ -194,8 +201,8 @@ export default function SupplierDashboardPage() {
                     <Bell className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Alerts Submitted</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm text-muted-foreground">Alerts Submitted</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {stats.totalAlerts}
                     </p>
                   </div>
@@ -210,8 +217,8 @@ export default function SupplierDashboardPage() {
                     <Package className="h-6 w-6 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Active Alerts</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm text-muted-foreground">Active Alerts</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {activeAlerts.length}
                     </p>
                   </div>
@@ -231,8 +238,8 @@ export default function SupplierDashboardPage() {
             <CardContent>
               {activeAlerts.length === 0 ? (
                 <div className="text-center py-8">
-                  <Clock className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No surplus alerts yet</p>
+                  <Clock className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No surplus alerts yet</p>
                   <Link
                     href="/supplier/alert"
                     className="text-primary hover:underline text-sm mt-2 inline-block"
@@ -250,25 +257,25 @@ export default function SupplierDashboardPage() {
                         href={`/supplier/alert/${alert.id}`}
                         className="block"
                       >
-                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <Badge className={config.color}>
                                 {config.label}
                               </Badge>
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-muted-foreground">
                                 Ships: {formatDate(alert.pickupDate)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700 truncate">
-                              {alert.produceDescription}
+                            <p className="text-sm text-foreground/80 truncate">
+                              {itemsSummary(alert.items, alert.produceDescription)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {alert.estimatedWeightLbs} lbs &middot;{' '}
                               {formatTimeWindow(alert.pickupTimeWindow)} window
                             </p>
                           </div>
-                          <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-4" />
+                          <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-4" />
                         </div>
                       </Link>
                     );
@@ -299,8 +306,8 @@ export default function SupplierDashboardPage() {
             <CardContent>
               {recentAlerts.length === 0 ? (
                 <div className="text-center py-8">
-                  <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">
+                  <Package className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
                     No surplus alerts yet
                   </p>
                   <Link
@@ -316,7 +323,7 @@ export default function SupplierDashboardPage() {
                   <div className="hidden sm:block">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b">
+                        <tr className="text-left text-sm text-muted-foreground border-b">
                           <th className="pb-3 font-medium">Date</th>
                           <th className="pb-3 font-medium">Produce</th>
                           <th className="pb-3 font-medium">Weight</th>
@@ -329,7 +336,7 @@ export default function SupplierDashboardPage() {
                           return (
                             <tr
                               key={alert.id}
-                              className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
+                              className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
                               onClick={() =>
                                 router.push(`/supplier/alert/${alert.id}`)
                               }
@@ -338,7 +345,7 @@ export default function SupplierDashboardPage() {
                                 {formatDate(alert.createdAt)}
                               </td>
                               <td className="py-3 text-sm max-w-[200px] truncate">
-                                {alert.produceDescription}
+                                {itemsSummary(alert.items, alert.produceDescription)}
                               </td>
                               <td className="py-3 text-sm">
                                 {alert.actualWeightLbs ?? alert.estimatedWeightLbs}{' '}
@@ -366,19 +373,19 @@ export default function SupplierDashboardPage() {
                           href={`/supplier/alert/${alert.id}`}
                           className="block"
                         >
-                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-muted-foreground">
                                 {formatDate(alert.createdAt)}
                               </span>
                               <Badge className={config.color}>
                                 {config.label}
                               </Badge>
                             </div>
-                            <p className="text-sm text-gray-700 truncate">
-                              {alert.produceDescription}
+                            <p className="text-sm text-foreground/80 truncate">
+                              {itemsSummary(alert.items, alert.produceDescription)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {alert.actualWeightLbs ?? alert.estimatedWeightLbs}{' '}
                               lbs
                             </p>

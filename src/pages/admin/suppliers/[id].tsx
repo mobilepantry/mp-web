@@ -22,7 +22,14 @@ import { Layout } from '@/components/layout';
 import { getSupplier } from '@/lib/db/suppliers';
 import { getAlertsBySupplier } from '@/lib/db/surplus-alerts';
 import { getSupplierStats } from '@/lib/db/stats';
-import type { Supplier, SurplusAlert, AlertStatus } from '@/types';
+import type { Supplier, SurplusAlert, AlertStatus, PickupItem } from '@/types';
+
+function itemsSummary(items: PickupItem[] | undefined, fallback?: string): string {
+  if (items && items.length > 0) {
+    return items.map((item) => `${item.quantity}x ${item.name}`).join(', ');
+  }
+  return fallback || '';
+}
 import {
   Button,
   Card,
@@ -125,9 +132,9 @@ export default function AdminSupplierDetailPage() {
   if (!supplier) {
     return (
       <Layout>
-        <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+        <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
           <div className="container mx-auto px-4 max-w-3xl text-center py-20">
-            <p className="text-gray-500 mb-4">Supplier not found</p>
+            <p className="text-muted-foreground mb-4">Supplier not found</p>
             <Link href="/admin/suppliers">
               <Button variant="outline">Back to Suppliers</Button>
             </Link>
@@ -141,7 +148,7 @@ export default function AdminSupplierDetailPage() {
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-3xl">
           {/* Back Link */}
           <div className="mb-6">
@@ -155,8 +162,8 @@ export default function AdminSupplierDetailPage() {
 
           {/* Supplier Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">{supplier.businessName}</h1>
-            <p className="text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">{supplier.businessName}</h1>
+            <p className="text-muted-foreground mt-1">
               Member since {formatDate(supplier.createdAt)}
             </p>
           </div>
@@ -170,8 +177,8 @@ export default function AdminSupplierDetailPage() {
                     <Package className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Total Rescues</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.totalRescues}</p>
+                    <p className="text-sm text-muted-foreground">Total Rescues</p>
+                    <p className="text-2xl font-bold text-foreground">{stats.totalRescues}</p>
                   </div>
                 </div>
               </CardContent>
@@ -184,8 +191,8 @@ export default function AdminSupplierDetailPage() {
                     <Scale className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Total Pounds</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm text-muted-foreground">Total Pounds</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {stats.totalPounds.toLocaleString()}
                     </p>
                   </div>
@@ -200,8 +207,8 @@ export default function AdminSupplierDetailPage() {
                     <Utensils className="h-6 w-6 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Meals Provided</p>
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-sm text-muted-foreground">Meals Provided</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {mealsProvided.toLocaleString()}
                     </p>
                   </div>
@@ -217,18 +224,18 @@ export default function AdminSupplierDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-700">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-foreground/80">
                   {BUSINESS_TYPE_LABELS[supplier.businessType] || supplier.businessType}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-foreground">
                   {supplier.contactName}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-400" />
+                <Mail className="h-4 w-4 text-muted-foreground" />
                 <a
                   href={`mailto:${supplier.email}`}
                   className="text-primary hover:underline text-sm"
@@ -237,7 +244,7 @@ export default function AdminSupplierDetailPage() {
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-gray-400" />
+                <Phone className="h-4 w-4 text-muted-foreground" />
                 <a
                   href={`tel:${supplier.phone}`}
                   className="text-primary hover:underline text-sm"
@@ -246,8 +253,8 @@ export default function AdminSupplierDetailPage() {
                 </a>
               </div>
               <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                <span className="text-sm text-gray-700">
+                <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <span className="text-sm text-foreground/80">
                   {formatAddress(supplier.address)}
                 </span>
               </div>
@@ -262,8 +269,8 @@ export default function AdminSupplierDetailPage() {
             <CardContent>
               {alerts.length === 0 ? (
                 <div className="text-center py-8">
-                  <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No surplus alerts yet</p>
+                  <Package className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">No surplus alerts yet</p>
                 </div>
               ) : (
                 <>
@@ -271,7 +278,7 @@ export default function AdminSupplierDetailPage() {
                   <div className="hidden sm:block">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b">
+                        <tr className="text-left text-sm text-muted-foreground border-b">
                           <th className="pb-3 font-medium">Date</th>
                           <th className="pb-3 font-medium">Produce</th>
                           <th className="pb-3 font-medium">Est. Wt</th>
@@ -286,7 +293,7 @@ export default function AdminSupplierDetailPage() {
                           return (
                             <tr
                               key={alert.id}
-                              className="border-b last:border-0 hover:bg-gray-50 cursor-pointer"
+                              className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
                               onClick={() =>
                                 router.push(`/admin/requests/${alert.id}`)
                               }
@@ -295,7 +302,7 @@ export default function AdminSupplierDetailPage() {
                                 {formatDate(alert.createdAt)}
                               </td>
                               <td className="py-3 text-sm max-w-[200px] truncate">
-                                {alert.produceDescription}
+                                {itemsSummary(alert.items, alert.produceDescription)}
                               </td>
                               <td className="py-3 text-sm">
                                 {alert.estimatedWeightLbs} lbs
@@ -309,7 +316,7 @@ export default function AdminSupplierDetailPage() {
                                 <Badge className={config.color}>{config.label}</Badge>
                               </td>
                               <td className="py-3">
-                                <ArrowRight className="h-4 w-4 text-gray-400" />
+                                <ArrowRight className="h-4 w-4 text-muted-foreground" />
                               </td>
                             </tr>
                           );
@@ -328,17 +335,17 @@ export default function AdminSupplierDetailPage() {
                           href={`/admin/requests/${alert.id}`}
                           className="block"
                         >
-                          <div className="p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-muted-foreground">
                                 {formatDate(alert.createdAt)}
                               </span>
                               <Badge className={config.color}>{config.label}</Badge>
                             </div>
-                            <p className="text-sm text-gray-700 truncate">
-                              {alert.produceDescription}
+                            <p className="text-sm text-foreground/80 truncate">
+                              {itemsSummary(alert.items, alert.produceDescription)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               Est: {alert.estimatedWeightLbs} lbs
                               {alert.actualWeightLbs != null && (
                                 <span> &middot; Actual: {alert.actualWeightLbs} lbs</span>

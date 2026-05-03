@@ -2,14 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSurplusAlert } from '@/lib/db/surplus-alerts';
 import { getSupplier } from '@/lib/db/suppliers';
 import { sendSurplusAlertNotification } from '@/lib/slack';
-import type { TimeWindow, ProduceCategory, ProduceGrade, AlertType } from '@/types';
+import type { TimeWindow, ProduceCategory, ProduceGrade, AlertType, PickupItem } from '@/types';
 
 interface CreateSurplusAlertBody {
   supplierId: string;
-  produceDescription: string;
+  items: PickupItem[];
   produceCategory: ProduceCategory[];
   estimatedWeightLbs: number;
-  estimatedCaseCount?: number;
   produceGrade?: ProduceGrade;
   alertType: AlertType;
   pickupAddress: {
@@ -39,7 +38,9 @@ export default async function handler(
     // Validate required fields
     if (
       !body.supplierId ||
-      !body.produceDescription ||
+      !body.items ||
+      !Array.isArray(body.items) ||
+      body.items.length < 1 ||
       !body.produceCategory ||
       !Array.isArray(body.produceCategory) ||
       body.produceCategory.length < 1 ||
@@ -73,10 +74,9 @@ export default async function handler(
     // Create the surplus alert — pickupDate is stored as a string
     const surplusAlert = await createSurplusAlert({
       supplierId: body.supplierId,
-      produceDescription: body.produceDescription,
+      items: body.items,
       produceCategory: body.produceCategory,
       estimatedWeightLbs: body.estimatedWeightLbs,
-      ...(body.estimatedCaseCount != null && { estimatedCaseCount: body.estimatedCaseCount }),
       ...(body.produceGrade && { produceGrade: body.produceGrade }),
       alertType: body.alertType,
       pickupAddress: body.pickupAddress,

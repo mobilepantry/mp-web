@@ -64,14 +64,19 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
       const user = await signInWithGoogle();
-      // Check if user has completed their supplier profile
-      const supplierProfile = await getSupplier(user.uid);
-      if (supplierProfile) {
+      const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+      const userIsAdmin = adminEmails.includes(user.email?.toLowerCase() || '');
+      if (userIsAdmin) {
         toast.success('Welcome back!');
-        router.push(redirect);
+        router.push('/admin');
       } else {
-        // New Google user needs to complete profile
-        router.push('/auth/complete-profile');
+        const supplierProfile = await getSupplier(user.uid);
+        if (supplierProfile) {
+          toast.success('Welcome back!');
+          router.push(redirect);
+        } else {
+          router.push('/auth/complete-profile');
+        }
       }
     } catch (error: unknown) {
       const firebaseError = error as { code?: string };
@@ -86,7 +91,7 @@ export default function LoginPage() {
     <Head>
       <title>Log In | MobilePantry</title>
     </Head>
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
@@ -154,10 +159,10 @@ export default function LoginPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">or</span>
+              <span className="bg-card px-2 text-muted-foreground">or</span>
             </div>
           </div>
 
@@ -200,7 +205,7 @@ export default function LoginPage() {
         </CardContent>
 
         <CardFooter className="justify-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
             <Link href="/auth/signup" className="text-primary hover:underline font-medium">
               Register as a supplier

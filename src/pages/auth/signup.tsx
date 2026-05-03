@@ -117,7 +117,7 @@ export default function SignupPage() {
     <Head>
       <title>Create Supplier Account | MobilePantry</title>
     </Head>
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4 py-12">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
@@ -309,10 +309,10 @@ export default function SignupPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">or</span>
+              <span className="bg-card px-2 text-muted-foreground">or</span>
             </div>
           </div>
 
@@ -355,7 +355,7 @@ export default function SignupPage() {
         </CardContent>
 
         <CardFooter className="justify-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link href="/auth/login" className="text-primary hover:underline font-medium">
               Sign in

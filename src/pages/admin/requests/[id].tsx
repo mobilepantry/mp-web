@@ -244,9 +244,9 @@ export default function AdminRequestDetailPage() {
   if (!alert) {
     return (
       <Layout>
-        <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+        <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
           <div className="container mx-auto px-4 max-w-3xl text-center py-20">
-            <p className="text-gray-500 mb-4">Alert not found</p>
+            <p className="text-muted-foreground mb-4">Alert not found</p>
             <Link href="/admin/requests">
               <Button variant="outline">Back to Alerts</Button>
             </Link>
@@ -261,7 +261,7 @@ export default function AdminRequestDetailPage() {
 
   return (
     <Layout>
-      <div className="min-h-[calc(100vh-200px)] bg-gray-50 py-8">
+      <div className="min-h-[calc(100vh-200px)] bg-muted py-8">
         <div className="container mx-auto px-4 max-w-3xl">
           {/* Back Link */}
           <div className="mb-6">
@@ -279,7 +279,7 @@ export default function AdminRequestDetailPage() {
               <Badge className={`${config.color} text-base px-3 py-1`}>
                 {config.label}
               </Badge>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 Submitted {formatDate(alert.createdAt)}
               </span>
             </div>
@@ -345,16 +345,39 @@ export default function AdminRequestDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Produce Description</p>
-                <p className="text-gray-900">{alert.produceDescription}</p>
+                <p className="text-sm text-muted-foreground mb-2">Items</p>
+                {alert.items && alert.items.length > 0 ? (
+                  <table className="w-full text-sm border rounded-lg overflow-hidden">
+                    <thead className="bg-muted">
+                      <tr className="text-left text-muted-foreground">
+                        <th className="px-3 py-2 font-normal">Qty</th>
+                        <th className="px-3 py-2 font-normal">Item</th>
+                        <th className="px-3 py-2 font-normal text-right">Est. Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {alert.items.map((item, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="px-3 py-2 font-medium">{item.quantity}x</td>
+                          <td className="px-3 py-2 text-foreground">{item.name}</td>
+                          <td className="px-3 py-2 text-right text-muted-foreground">
+                            {item.estimatedPrice != null ? `$${item.estimatedPrice.toFixed(2)}` : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="text-foreground">{alert.produceDescription}</p>
+                )}
               </div>
 
               {alert.produceCategory && alert.produceCategory.length > 0 && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Categories</p>
+                  <p className="text-sm text-muted-foreground mb-1">Categories</p>
                   <div className="flex flex-wrap gap-2">
                     {alert.produceCategory.map((cat) => (
-                      <Badge key={cat} className="bg-gray-100 text-gray-700 border-gray-200">
+                      <Badge key={cat} className="bg-muted text-foreground/80 border-border">
                         {cat}
                       </Badge>
                     ))}
@@ -364,42 +387,42 @@ export default function AdminRequestDetailPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Estimated Weight</p>
-                  <p className="text-gray-900">{alert.estimatedWeightLbs} lbs</p>
+                  <p className="text-sm text-muted-foreground mb-1">Estimated Weight</p>
+                  <p className="text-foreground">{alert.estimatedWeightLbs} lbs</p>
                 </div>
                 {alert.actualWeightLbs != null && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Actual Weight</p>
-                    <p className="text-gray-900 font-medium">{alert.actualWeightLbs} lbs</p>
+                    <p className="text-sm text-muted-foreground mb-1">Actual Weight</p>
+                    <p className="text-foreground font-medium">{alert.actualWeightLbs} lbs</p>
                   </div>
                 )}
               </div>
 
               {alert.estimatedCaseCount != null && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Estimated Case Count</p>
-                  <p className="text-gray-900">{alert.estimatedCaseCount}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Estimated Case Count</p>
+                  <p className="text-foreground">{alert.estimatedCaseCount}</p>
                 </div>
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {alert.produceGrade && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Supplier Grade Estimate</p>
-                    <p className="text-gray-900">Grade {alert.produceGrade}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Supplier Grade Estimate</p>
+                    <p className="text-foreground">Grade {alert.produceGrade}</p>
                   </div>
                 )}
                 {alert.actualGrade && (
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Actual Grade</p>
-                    <p className="text-gray-900 font-medium">Grade {alert.actualGrade}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Actual Grade</p>
+                    <p className="text-foreground font-medium">Grade {alert.actualGrade}</p>
                   </div>
                 )}
               </div>
 
               {alert.temperatureAtPickup != null && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Temperature at Receipt</p>
+                  <p className="text-sm text-muted-foreground mb-1">Temperature at Receipt</p>
                   <p className={`font-medium ${getTempColor(alert.temperatureAtPickup)}`}>
                     {alert.temperatureAtPickup}{'\u00B0'}F
                   </p>
@@ -407,11 +430,11 @@ export default function AdminRequestDetailPage() {
               )}
 
               <div>
-                <p className="text-sm text-gray-500 mb-1">Alert Type</p>
+                <p className="text-sm text-muted-foreground mb-1">Alert Type</p>
                 <Badge className={
                   alert.alertType === 'standing'
                     ? 'bg-purple-100 text-purple-800 border-purple-200'
-                    : 'bg-gray-100 text-gray-700 border-gray-200'
+                    : 'bg-muted text-foreground/80 border-border'
                 }>
                   {alert.alertType === 'standing' ? 'Standing Weekly' : 'Ad-hoc'}
                 </Badge>
@@ -426,11 +449,11 @@ export default function AdminRequestDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Ship From Address</p>
+                <p className="text-sm text-muted-foreground mb-1">Ship From Address</p>
                 <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-gray-900">
+                    <p className="text-foreground">
                       {formatAddress(alert.pickupAddress)}
                     </p>
                     <a
@@ -447,26 +470,26 @@ export default function AdminRequestDetailPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Shipment Date</p>
-                  <p className="text-gray-900">{formatDate(alert.pickupDate)}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Shipment Date</p>
+                  <p className="text-foreground">{formatDate(alert.pickupDate)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Time Window</p>
-                  <p className="text-gray-900">
+                  <p className="text-sm text-muted-foreground mb-1">Time Window</p>
+                  <p className="text-foreground">
                     {formatTimeWindow(alert.pickupTimeWindow)}
                   </p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-gray-500 mb-1">Shipping Contact</p>
-                <p className="text-gray-900">{alert.contactOnArrival}</p>
+                <p className="text-sm text-muted-foreground mb-1">Shipping Contact</p>
+                <p className="text-foreground">{alert.contactOnArrival}</p>
               </div>
 
               {alert.specialInstructions && (
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Special Instructions</p>
-                  <p className="text-gray-900">{alert.specialInstructions}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Special Instructions</p>
+                  <p className="text-foreground">{alert.specialInstructions}</p>
                 </div>
               )}
             </CardContent>
@@ -488,14 +511,14 @@ export default function AdminRequestDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-900 font-medium">{supplier.businessName}</span>
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-foreground font-medium">{supplier.businessName}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">{supplier.contactName}</span>
+                  <span className="text-sm text-foreground/80">{supplier.contactName}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
+                  <Phone className="h-4 w-4 text-muted-foreground" />
                   <a
                     href={`tel:${supplier.phone}`}
                     className="text-primary hover:underline text-sm"
@@ -504,7 +527,7 @@ export default function AdminRequestDetailPage() {
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
+                  <Mail className="h-4 w-4 text-muted-foreground" />
                   <a
                     href={`mailto:${supplier.email}`}
                     className="text-primary hover:underline text-sm"
@@ -524,25 +547,25 @@ export default function AdminRequestDetailPage() {
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Created</span>
-                  <span className="text-gray-900">{formatDate(alert.createdAt)}</span>
+                  <span className="text-muted-foreground">Created</span>
+                  <span className="text-foreground">{formatDate(alert.createdAt)}</span>
                 </div>
                 {(alert as any).confirmedAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Confirmed</span>
-                    <span className="text-gray-900">{formatDate((alert as any).confirmedAt)}</span>
+                    <span className="text-muted-foreground">Confirmed</span>
+                    <span className="text-foreground">{formatDate((alert as any).confirmedAt)}</span>
                   </div>
                 )}
                 {(alert as any).pickedUpAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">In Transit</span>
-                    <span className="text-gray-900">{formatDate((alert as any).pickedUpAt)}</span>
+                    <span className="text-muted-foreground">In Transit</span>
+                    <span className="text-foreground">{formatDate((alert as any).pickedUpAt)}</span>
                   </div>
                 )}
                 {(alert as any).completedAt && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Completed</span>
-                    <span className="text-gray-900">{formatDate((alert as any).completedAt)}</span>
+                    <span className="text-muted-foreground">Completed</span>
+                    <span className="text-foreground">{formatDate((alert as any).completedAt)}</span>
                   </div>
                 )}
               </div>
@@ -564,7 +587,7 @@ export default function AdminRequestDetailPage() {
             <div>
               <Label htmlFor="actualWeightLbs">Actual Weight (lbs) *</Label>
               <div className="flex items-center gap-2 mt-2">
-                <Scale className="h-4 w-4 text-gray-400" />
+                <Scale className="h-4 w-4 text-muted-foreground" />
                 <Input
                   id="actualWeightLbs"
                   type="number"
@@ -580,7 +603,7 @@ export default function AdminRequestDetailPage() {
             <div>
               <Label htmlFor="temperatureAtPickup">Temperature at Receipt (&deg;F) *</Label>
               <div className="flex items-center gap-2 mt-2">
-                <Thermometer className="h-4 w-4 text-gray-400" />
+                <Thermometer className="h-4 w-4 text-muted-foreground" />
                 <Input
                   id="temperatureAtPickup"
                   type="number"
@@ -604,7 +627,7 @@ export default function AdminRequestDetailPage() {
               <Label htmlFor="actualGrade">Actual Produce Grade *</Label>
               <select
                 id="actualGrade"
-                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                className="mt-2 w-full rounded-md border border-input px-3 py-2 text-sm bg-background text-foreground"
                 value={actualGrade}
                 onChange={(e) => setActualGrade(e.target.value as ProduceGrade | '')}
               >
